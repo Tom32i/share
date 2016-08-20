@@ -87,6 +87,16 @@ deploy@demo:
 deploy@prod:
 	vendor/bin/dep deploy prod
 
+## Upload photos (demo)
+upload@demo:
+	chmod -R 755 web/photos
+	rsync -arzv web/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/web/photos #--delete
+
+## Upload photos (prod)
+upload@prod:
+	chmod -R 755 web/photos
+	rsync -arzv web/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/web/photos #--delete
+
 ##########
 # Custom #
 ##########

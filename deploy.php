@@ -29,7 +29,8 @@ set('http_user', 'www-data');
 set('writable_use_sudo', false);
 set('clear_use_sudo', false);
 
-set('writable_dirs', array_merge(get('writable_dirs'), ['var/sessions/prod']));
+set('shared_dirs', array_merge(get('writable_dirs'), ['web/photos']));
+set('writable_dirs', array_merge(get('writable_dirs'), ['var/sessions/prod', 'web/photos']));
 
 task('deploy:npm', function () {
     run("cd {{release_path}} && npm install");

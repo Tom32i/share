@@ -36,3 +36,7 @@ framework:
 twig:
     debug:            "%kernel.debug%"
     strict_variables: "%kernel.debug%"
+
+# Family photos
+family_photo:
+    site_title: "%site_title%"
