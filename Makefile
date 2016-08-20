@@ -95,7 +95,7 @@ upload@demo:
 ## Upload photos (prod)
 upload@prod:
 	chmod -R 755 web/photos
-	rsync -arzv web/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/web/photos #--delete
+	rsync -arzv web/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/web/photos #--delete
 
 ##########
 # Custom #

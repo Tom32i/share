@@ -13,7 +13,7 @@ server('demo', 'deployer.dev', 22)
 
 // Define a server for deployment.
 // Let's name it "prod" and use port 22.
-server('prod', 'dédié', 22)
+server('prod', 'tom32i.fr', 22)
     ->user('tom32i')
     ->forwardAgent() // You can use identity key, ssh config, or username/password to auth on the server.
     ->stage('production')
@@ -23,7 +23,7 @@ server('prod', 'dédié', 22)
 // The server needs to have git installed for this to work.
 // If you're not using a forward agent, then the server has to be able to clone
 // your project from this repository.
-set('repository', 'git@github.com:Tom32i/Family-Photos.git');
+set('repository', 'https://github.com/Tom32i/Family-Photos.git');
 
 set('http_user', 'www-data');
 set('writable_use_sudo', false);
