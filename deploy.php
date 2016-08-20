@@ -1,7 +1,7 @@
 <?php
 
 // All Deployer recipes are based on `recipe/common.php`.
-require 'recipe/symfony.php';
+require 'recipe/symfony3.php';
 
 // Define a server for deployment.
 // Let's name it "prod" and use port 22.
@@ -9,6 +9,7 @@ server('demo', 'deployer.dev', 22)
     ->user('tom32i')
     ->forwardAgent() // You can use identity key, ssh config, or username/password to auth on the server.
     ->stage('production')
+    ->env('branch','symfony3')
     ->env('deploy_path', '/home/tom32i/family-photos'); // Define the base path to deploy your project to.
 
 // Define a server for deployment.
@@ -17,6 +18,7 @@ server('prod', 'dédié', 22)
     ->user('tom32i')
     ->forwardAgent() // You can use identity key, ssh config, or username/password to auth on the server.
     ->stage('production')
+    ->env('branch','symfony3')
     ->env('deploy_path', '/home/tom32i/family-photos'); // Define the base path to deploy your project to.
 
 // Specify the repository from which to download your project's code.
