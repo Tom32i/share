@@ -1,0 +1,55 @@
+{% extends '::base.html.twig' %}
+
+{% block meta_title 'Famille Jarrand' %}
+
+{% block body %}
+{% spaceless %}
+    <div class="container">
+        <h1 class="title">{{ site_title }}</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Aperçu</th>
+                    <th>Évenement</th>
+                    <th>Date</th>
+                    <th>Télécharger les photos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr class="line-link" onclick="openEvent('{{ event.name }}');">
+                    <td>
+                        {% set photo = event.photos|first %}
+                        <img class="preview" alt="{{ photo.name }}" title="{{ photo.name }}" src="{{ asset(photo.path) }}" />
+                    </td>
+                    <td>
+                        <a href="{{ path('event', {name: event.name}) }}" id="{{ event.name }}">
+                            {{ event.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ event.date|date('d/m/Y') }}
+                    </td>
+                    <td>
+                        {% if event.download %}
+                        <a href="{{ asset(event.download.path) }}" title="Télécharger {{ event.download.name }}" class="button button-outline">
+                            📥 Télécharger les photos
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endspaceless %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function openEvent (name) {
+    document.getElementById(name).click();
+}
+</script>
+{% endblock %}

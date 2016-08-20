@@ -1,0 +1,34 @@
+{% extends '::base.html.twig' %}
+
+{% block meta_title event.title %}
+{% block body_class 'event' %}
+
+{% block body %}
+{% spaceless %}
+    <div class="container">
+        {% if event.download %}
+            <a href="{{ asset(event.download.path) }}" title="Télécharger {{ event.download.name }}" class="button button-outline right">
+                📥 Télécharger les photos
+            </a>
+        {% endif %}
+
+        <a href="{{ path('events') }}" title="Retour à la liste" class="button button-clear right">
+            &#8592; Retour
+        </a>
+
+        <h2 class="title">
+            {{ event.title }}
+            <small>{{ event.date|date('d/m/Y') }}</small>
+        </h2>
+
+        <div class="photos">
+        {% for photo in event.photos %}
+            {% set url = asset(photo.path) %}
+            <a href="{{ url }}" class="photo" target="_blank">
+                <img alt="{{ photo.name }}" title="{{ photo.name }}" src="{{ url }}" />
+            </a>
+        {% endfor %}
+        </div>
+    </div>
+{% endspaceless %}
+{%- endblock -%}

@@ -1,0 +1,45 @@
+
+body {
+    font-family: 'Lucida Sans Unicode', sans-serif;
+    font-size: 16px;
+    padding: 4 * $margin 0 0 0;
+}
+
+.title {
+    margin-bottom: $margin;
+
+    small {
+        color: #777;
+        font-size: 0.4em;
+        display: block;
+    }
+}
+
+img {
+    max-width: 100%;
+}
+
+table {
+    tr:hover {
+        td {
+            background: $gray;
+        }
+    }
+}
+
+.photo {
+    display: block;
+    margin: $margin 0;
+}
+
+.line-link {
+    cursor: pointer;
+}
+
+.preview {
+    max-width: 10em;
+}
+
+.right {
+    float: right;
+}
