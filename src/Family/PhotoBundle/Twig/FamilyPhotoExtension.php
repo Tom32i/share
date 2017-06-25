@@ -5,7 +5,7 @@ namespace Family\PhotoBundle\Twig;
 /**
  * Family Photo Twig Extension
  */
-class FamilyPhotoExtension extends \Twig_Extension
+class FamilyPhotoExtension extends \Twig_Extension implements \Twig_Extension_GlobalsInterface
 {
     /**
      * Title
@@ -15,13 +15,23 @@ class FamilyPhotoExtension extends \Twig_Extension
     protected $title;
 
     /**
+     * Presets
+     *
+     * @var array
+     */
+    protected $presets;
+
+
+    /**
      * Construct
      *
      * @param string $title
+     * @param array $presets
      */
-    public function __construct($title)
+    public function __construct($title, array $presets)
     {
         $this->title = $title;
+        $this->presets = $presets;
     }
 
     /**
@@ -29,14 +39,9 @@ class FamilyPhotoExtension extends \Twig_Extension
      */
     public function getGlobals()
     {
-        return ['site_title' => $this->title];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return 'family_photo_extension';
+        return [
+            'site_title' => $this->title,
+            'presets' => $this->presets,
+        ];
     }
 }

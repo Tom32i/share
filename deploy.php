@@ -1,43 +1,58 @@
 <?php
+namespace Deployer;
 
-// All Deployer recipes are based on `recipe/common.php`.
 require 'recipe/symfony3.php';
 
-// Define a server for deployment.
-// Let's name it "prod" and use port 22.
-server('demo', 'deployer.dev', 22)
-    ->user('tom32i')
-    ->forwardAgent() // You can use identity key, ssh config, or username/password to auth on the server.
-    ->stage('production')
-    ->env('deploy_path', '/home/tom32i/family-photos'); // Define the base path to deploy your project to.
+// Configuration
 
-// Define a server for deployment.
-// Let's name it "prod" and use port 22.
-server('prod', 'tom32i.fr', 22)
-    ->user('tom32i')
-    ->forwardAgent() // You can use identity key, ssh config, or username/password to auth on the server.
-    ->stage('production')
-    ->env('deploy_path', '/home/tom32i/family-photos'); // Define the base path to deploy your project to.
-
-// Specify the repository from which to download your project's code.
-// The server needs to have git installed for this to work.
-// If you're not using a forward agent, then the server has to be able to clone
-// your project from this repository.
-set('repository', 'https://github.com/Tom32i/Family-Photos.git');
-
+set('repository', function () { return runLocally('git config --get remote.origin.url'); });
+set('branch', function () { return runLocally('git rev-parse --abbrev-ref HEAD'); });
+set('env', 'prod');
+set('git_tty', true); // [Optional] Allocate tty for git on first deployment
+add('shared_files', []);
+add('shared_dirs', ['var/photos', 'var/photos-cache']);
+add('writable_dirs', ['var/photos', 'var/photos-cache']);
+set('allow_anonymous_stats', false);
 set('http_user', 'www-data');
 set('writable_use_sudo', false);
 set('clear_use_sudo', false);
 
-set('shared_dirs', array_merge(get('writable_dirs'), ['web/photos']));
-set('writable_dirs', array_merge(get('writable_dirs'), ['web/photos']));
+// Hosts
 
-task('deploy:npm', function () {
-    run("cd {{release_path}} && npm install");
-})->desc('Install nodejs dependencies');
+host('tom32i.fr')
+    ->stage('production')
+    ->set('deploy_path', '/home/tom32i/family-photos');
 
-task('deploy:assetic:dump', function () {
-    run('cd {{release_path}} && ./node_modules/.bin/gulp build');
-})->desc('Dump assets');
+host('deployer.dev')
+    ->stage('production')
+    ->set('deploy_path', '/home/tom32i/family-photos');
 
-after('deploy:vendors', 'deploy:npm');
+// Tasks
+
+desc('Install nodejs dependencies');
+task('deploy:node:vendors', function () {
+    run('cd {{release_path}} && npm --no-spin install');
+});
+after('deploy:vendors', 'deploy:node:vendors');
+
+desc('Build assets');
+task('deploy:assets:build', function () {
+    run('cd {{release_path}} && make build@prod');
+});
+after('deploy:assetic:dump', 'deploy:assets:build');
+
+desc('Generate missing thumbnails');
+task('thumbnail:generate', function () {
+    run('cd {{release_path}} && make thumbnail@prod');
+});
+
+desc('Clear all thumbnails');
+task('thumbnail:clear', function () {
+    run('cd {{release_path}} && make clear-thumbnail@prod');
+});
+
+// [Optional] if deploy fails automatically unlock.
+after('deploy:failed', 'deploy:unlock');
+
+// Migrate database before symlink new release.
+before('deploy:symlink', 'thumbnail:generate');

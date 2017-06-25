@@ -21,7 +21,14 @@
                 <tr class="line-link" onclick="openEvent('{{ event.name }}');">
                     <td>
                         {% set photo = event.photos|first %}
-                        <img class="preview" alt="{{ photo.name }}" title="{{ photo.name }}" src="{{ asset(photo.path) }}" />
+                        <img
+                            class="preview"
+                            alt="{{ photo.name }}"
+                            title="{{ photo.name }}"
+                            src="{{ path('thumbnail', { event: event.name, photo: photo.name }) }}"
+                            width="{{ presets.thumbnail.w }}"
+                            height="{{ presets.thumbnail.h }}"
+                        />
                     </td>
                     <td>
                         <a href="{{ path('event', {name: event.name}) }}" id="{{ event.name }}">

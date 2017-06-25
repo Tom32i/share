@@ -26,10 +26,26 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue('Family Photos')
                 ->end()
                 ->scalarNode('path')
-                    ->defaultValue('photos')
+                    ->defaultValue('%kernel.root_dir%/../var/photos')
                 ->end()
-                ->scalarNode('web')
-                    ->defaultValue('%kernel.root_dir%/../web')
+                ->scalarNode('cache')
+                    ->defaultValue('%kernel.root_dir%/../var/photos-cache')
+                ->end()
+                ->arrayNode('presets')
+                    ->useAttributeAsKey('name')
+                    ->prototype('array')
+                        ->children()
+                            ->scalarNode('name')->end()
+                            ->scalarNode('w')->end()
+                            ->scalarNode('h')->end()
+                            ->scalarNode('dpr')->end()
+                            ->scalarNode('fit')->end()
+                        ->end()
+                    ->end()
+                    ->defaultValue([
+                        'thumbnail' => ['w' => 720, 'h' => 480, 'dpr' => 1, 'fit' => 'crop'],
+                        'full' => ['w' => 1920, 'h' => 1280, 'dpr' => 1, 'fit' => 'crop'],
+                    ])
                 ->end()
             ->end();
 

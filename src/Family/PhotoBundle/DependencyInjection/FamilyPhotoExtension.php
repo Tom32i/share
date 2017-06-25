@@ -25,8 +25,9 @@ class FamilyPhotoExtension extends Extension
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
 
-        $container->setParameter('family_photo.path', $config['path']);
-        $container->setParameter('family_photo.web', $config['web']);
         $container->setParameter('family_photo.title', $config['site_title']);
+        $container->setParameter('family_photo.path', $config['path']);
+        $container->setParameter('family_photo.cache', $config['cache']);
+        $container->setParameter('family_photo.presets', $config['presets']);
     }
 }

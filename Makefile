@@ -32,14 +32,22 @@ install:
 	# Npm install
 	npm install
 
-install@prod: SYMFONY_ENV = prod
+install@prod: export SYMFONY_ENV = prod
 install@prod:
 	# Composer
 	composer install --prefer-dist --optimize-autoloader --no-progress --no-interaction
 	# Symfony cache
 	bin/console cache:warmup --no-debug
 	# Npm install
-	npm --no-spin install
+	NODE_ENV=production npm --no-spin install
+
+#######
+# Run #
+#######
+
+## Run application
+run:
+	bin/console server:run
 
 #########
 # Build #
@@ -47,11 +55,25 @@ install@prod:
 
 ## Build application
 build:
-	gulp watch
+	node_modules/.bin/gulp watch
 
-build@prod: SYMFONY_ENV = prod
+build@prod: export NODE_ENV = production
 build@prod:
-	gulp build
+	node_modules/.bin/gulp build
+
+thumbnail:
+	bin/console thumbnail:generate
+
+thumbnail@prod: export SYMFONY_ENV = prod
+thumbnail@prod:
+	bin/console thumbnail:generate
+
+clear-thumbnail:
+	bin/console thumbnail:clear
+
+clear-thumbnail@prod: export SYMFONY_ENV = prod
+clear-thumbnail@prod:
+	bin/console thumbnail:clear
 
 ############
 # Security #
@@ -61,7 +83,7 @@ build@prod:
 security:
 	security-checker security:check
 
-security@test: SYMFONY_ENV = test
+security@test: export SYMFONY_ENV = test
 security@test: security
 
 ########
@@ -72,7 +94,7 @@ security@test: security
 lint:
 	php-cs-fixer fix --config-file=.php_cs --dry-run --diff
 
-lint@test: SYMFONY_ENV = test
+lint@test: export SYMFONY_ENV = test
 lint@test: lint
 
 ##########
@@ -80,22 +102,26 @@ lint@test: lint
 ##########
 
 ## Deploy application (demo)
+deploy@demo: export ENV = prod
 deploy@demo:
-	vendor/bin/dep deploy demo
+	vendor/bin/dep deploy deployer.dev
 
 ## Deploy application (prod)
+deploy@prod: export ENV = prod
 deploy@prod:
-	vendor/bin/dep deploy prod
+	vendor/bin/dep deploy tom32i.fr
 
 ## Upload photos (demo)
 upload@demo:
-	chmod -R 755 web/photos
-	rsync -arzv web/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/web/photos #--delete
+	chmod -R 755 var/photos
+	rsync -arzv var/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos #--delete
+	vendor/bin/dep thumbnail:generate deployer.dev
 
 ## Upload photos (prod)
 upload@prod:
-	chmod -R 755 web/photos
-	rsync -arzv web/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/web/photos #--delete
+	chmod -R 755 var/photos
+	rsync -arzv var/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/var/photos #--delete
+	vendor/bin/dep thumbnail:generate tom32i.fr
 
 ##########
 # Custom #
