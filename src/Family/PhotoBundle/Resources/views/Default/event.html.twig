@@ -23,9 +23,14 @@
 
         <div class="photos">
         {% for photo in event.photos %}
-            {% set url = asset(photo.path) %}
-            <a href="{{ url }}" class="photo" target="_blank">
-                <img alt="{{ photo.name }}" title="{{ photo.name }}" src="{{ url }}" />
+            <a href="{{ path('source', { event: event.name, photo: photo.name }) }}" class="photo" target="_blank">
+                <img
+                    alt="{{ photo.name }}"
+                    title="{{ photo.name }}"
+                    src="{{ path('full', { event: event.name, photo: photo.name }) }}"
+                    width="{{ presets.full.w }}"
+                    height="{{ presets.full.h }}"
+                />
             </a>
         {% endfor %}
         </div>

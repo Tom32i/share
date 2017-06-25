@@ -8,13 +8,6 @@ namespace Family\PhotoBundle\Service;
 class Browser
 {
     /**
-     * Web path
-     *
-     * @var String
-     */
-    protected $web;
-
-    /**
      * Photos path
      *
      * @var String
@@ -24,12 +17,10 @@ class Browser
     /**
      * Constructor
      *
-     * @param string $web
      * @param string $path
      */
-    public function __construct($web, $path)
+    public function __construct($path)
     {
-        $this->web  = preg_replace('#^(.*)/?#', '$1', $web);
         $this->path = preg_replace('#^(.*)/?#', '$1', $path);
     }
 
@@ -40,18 +31,17 @@ class Browser
      */
     public function listEvents()
     {
-        $directory = $this->web . '/' . $this->path;
-        $events    = [];
-
-        if (!file_exists($directory) || !is_dir($directory)) {
+        if (!file_exists($this->path) || !is_dir($this->path)) {
             return null;
         }
 
-        if ($handle = opendir($directory)) {
+        $events = [];
+
+        if ($handle = opendir($this->path)) {
 
             while (false !== ($entry = readdir($handle))) {
 
-                $entryPath = $directory . '/' . $entry;
+                $entryPath = $this->path . '/' . $entry;
                 $titlePath = $entryPath . '/' . '.title';
 
                 if (!preg_match('#^\.#i', $entry) && is_dir($entryPath)) {
@@ -76,8 +66,7 @@ class Browser
      */
     public function readEvent($name)
     {
-        $path      = $this->path . '/' . $name;
-        $directory = $this->web . '/' . $path;
+        $directory = sprintf('%s/%s', $this->path, $name);
         $photos    = [];
         $download  = null;
         $title     = null;
@@ -91,13 +80,14 @@ class Browser
 
             while (false !== ($entry = readdir($handle))) {
 
+                $file = sprintf('%s/%s', $directory, $entry);
+
                 if (preg_match('#^.*\.(jpg|jpeg|png|gif)$#i', $entry)) {
 
-                    $exif = exif_read_data($directory . '/' . $entry);
+                    $exif = exif_read_data($file);
 
                     $photos[] = [
                         'name' => $entry,
-                        'path' => $path . '/' . $entry,
                         'exif' => $exif,
                         'date' => $exif ? $exif['DateTime'] : null,
                     ];
@@ -110,12 +100,12 @@ class Browser
                 if (preg_match('#^.*\.zip$#i', $entry)) {
                     $download = [
                         'name' => $entry,
-                        'path' => $path . '/' . $entry,
+                        'path' => $file,
                     ];
                 }
 
                 if (preg_match('#^\.title$#i', $entry)) {
-                    $title = file_get_contents($directory . '/' . $entry);
+                    $title = file_get_contents($file);
                 }
             }
 

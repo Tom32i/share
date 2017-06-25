@@ -6,6 +6,5 @@
 /vendor/
 /web/bundles/
 node_modules/*
-web/photos/*
 web/css/*
 web/js/*
