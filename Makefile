@@ -114,13 +114,13 @@ deploy@prod:
 ## Upload photos (demo)
 upload@demo:
 	chmod -R 755 var/photos
-	rsync -arzv var/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos #--delete
+	rsync -arzv --progress var/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos #--delete
 	vendor/bin/dep thumbnail:generate deployer.dev
 
 ## Upload photos (prod)
 upload@prod:
 	chmod -R 755 var/photos
-	rsync -arzv var/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/var/photos #--delete
+	rsync -arzv --progress var/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/var/photos #--delete
 	vendor/bin/dep thumbnail:generate tom32i.fr
 
 ##########
