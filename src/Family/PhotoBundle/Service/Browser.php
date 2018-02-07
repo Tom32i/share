@@ -42,7 +42,6 @@ class Browser
             while (false !== ($entry = readdir($handle))) {
 
                 $entryPath = $this->path . '/' . $entry;
-                $titlePath = $entryPath . '/' . '.title';
 
                 if (!preg_match('#^\.#i', $entry) && is_dir($entryPath)) {
                     $events[] = $this->readEvent($entry);
@@ -70,6 +69,7 @@ class Browser
         $photos    = [];
         $download  = null;
         $title     = null;
+        $private   = false;
         $date      = null;
 
         if (!file_exists($directory) || !is_dir($directory)) {
@@ -107,6 +107,10 @@ class Browser
                 if (preg_match('#^\.title$#i', $entry)) {
                     $title = file_get_contents($file);
                 }
+
+                if (preg_match('#^\.private$#i', $entry)) {
+                    $private = true;
+                }
             }
 
             closedir($handle);
@@ -117,6 +121,7 @@ class Browser
         return [
             'name'     => $name,
             'title'    => $title,
+            'private'  => $private,
             'date'     => $date,
             'photos'   => $photos,
             'download' => $download,

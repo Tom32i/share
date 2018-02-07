@@ -20,7 +20,9 @@ class DefaultController extends Controller
     public function indexAction()
     {
         $browser = $this->container->get('family_photo.browser');
-        $events  = $browser->listEvents();
+        $events  = array_filter($browser->listEvents(), function ($event) {
+            return !$event['private'];
+        });
 
         return ['events' => $events];
     }

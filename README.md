@@ -21,6 +21,12 @@ web/
 - `.title` should contain the name of the event
 - `*.zip` should contain all the pictures of the album in a zip archive.
 
+### Private album
+
+Add a `.private` file in any picture directory to hide it from the list.
+The album will still be accessible at its url: `/{directory}`.
+⚠️ Warning: this is not a secure way to prevent unwanted people from accessing your photos.
+
 ## Deploy the code
 
     make deploy@prod
