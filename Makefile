@@ -123,6 +123,16 @@ upload@prod:
 	rsync -arzv --progress var/photos/* tom32i@tom32i.fr:/home/tom32i/family-photos/shared/var/photos #--delete
 	vendor/bin/dep thumbnail:generate tom32i.fr
 
+## Download photos (demo)
+download@demo:
+	rsync -arzv --progress tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos/* var/photos
+	vendor/bin/dep thumbnail:generate deployer.dev
+
+## Download photos (prod)
+download@prod:
+	rsync -arzv --progress tom32i@tom32i.fr:/home/tom32i/family-photos/shared/var/photos/* var/photos
+	vendor/bin/dep thumbnail:generate tom32i.fr
+
 ##########
 # Custom #
 ##########
