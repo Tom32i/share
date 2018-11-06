@@ -7,15 +7,17 @@ require 'recipe/symfony3.php';
 
 set('repository', function () { return runLocally('git config --get remote.origin.url'); });
 set('branch', function () { return runLocally('git rev-parse --abbrev-ref HEAD'); });
-set('env', 'prod');
-set('git_tty', true); // [Optional] Allocate tty for git on first deployment
+set('symfony_env', 'prod');
+set('user', 'tom32i');
+set('allow_anonymous_stats', false);
+set('http_user', 'tom32i');
+set('writable_mode', 'chmod');
+set('writable_use_sudo', false);
+set('clear_use_sudo', false);
+
 add('shared_files', []);
 add('shared_dirs', ['var/photos', 'var/photos-cache']);
 add('writable_dirs', ['var/photos', 'var/photos-cache']);
-set('allow_anonymous_stats', false);
-set('http_user', 'www-data');
-set('writable_use_sudo', false);
-set('clear_use_sudo', false);
 
 // Hosts
 
@@ -23,7 +25,7 @@ host('tom32i.fr')
     ->stage('production')
     ->set('deploy_path', '/home/tom32i/family-photos');
 
-host('deployer.dev')
+host('deployer.vm')
     ->stage('production')
     ->set('deploy_path', '/home/tom32i/family-photos');
 

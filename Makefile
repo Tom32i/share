@@ -104,7 +104,7 @@ lint@test: lint
 ## Deploy application (demo)
 deploy@demo: export ENV = prod
 deploy@demo:
-	vendor/bin/dep deploy deployer.dev
+	vendor/bin/dep deploy deployer.vm
 
 ## Deploy application (prod)
 deploy@prod: export ENV = prod
@@ -114,8 +114,8 @@ deploy@prod:
 ## Upload photos (demo)
 upload@demo:
 	chmod -R 755 var/photos
-	rsync -arzv --progress var/photos/* tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos #--delete
-	vendor/bin/dep thumbnail:generate deployer.dev
+	rsync -arzv --progress var/photos/* tom32i@deployer.vm:/home/tom32i/family-photos/shared/var/photos #--delete
+	vendor/bin/dep thumbnail:generate deployer.vm
 
 ## Upload photos (prod)
 upload@prod:
@@ -125,8 +125,8 @@ upload@prod:
 
 ## Download photos (demo)
 download@demo:
-	rsync -arzv --progress tom32i@deployer.dev:/home/tom32i/family-photos/shared/var/photos/* var/photos
-	vendor/bin/dep thumbnail:generate deployer.dev
+	rsync -arzv --progress tom32i@deployer.vm:/home/tom32i/family-photos/shared/var/photos/* var/photos
+	vendor/bin/dep thumbnail:generate deployer.vm
 
 ## Download photos (prod)
 download@prod:
