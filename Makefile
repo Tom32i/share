@@ -28,7 +28,7 @@ help:
 ## Install application
 install:
 	# Composer
-	composer install --no-progress --no-interaction
+	bin/composer install --no-progress --no-interaction
 	# Npm install
 	npm install
 
@@ -54,12 +54,12 @@ run:
 #########
 
 ## Build application
-build:
-	node_modules/.bin/gulp watch
+watch:
+	npm run watch
 
-build@prod: export NODE_ENV = production
-build@prod:
-	node_modules/.bin/gulp build
+build: export NODE_ENV = production
+build:
+	npm run build
 
 thumbnail:
 	bin/console thumbnail:generate

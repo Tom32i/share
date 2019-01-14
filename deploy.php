@@ -39,7 +39,7 @@ after('deploy:vendors', 'deploy:node:vendors');
 
 desc('Build assets');
 task('deploy:assets:build', function () {
-    run('cd {{release_path}} && make build@prod');
+    run('cd {{release_path}} && make build');
 });
 after('deploy:assetic:dump', 'deploy:assets:build');
 
