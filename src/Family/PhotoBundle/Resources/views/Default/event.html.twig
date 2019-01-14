@@ -7,7 +7,7 @@
 {% spaceless %}
     <div class="container">
         {% if event.download %}
-            <a href="{{ asset(event.download.path) }}" title="Télécharger {{ event.download.name }}" class="button button-outline right">
+            <a href="{{ path('event_zip', { name: event.name }) }}" title="Télécharger {{ event.download.name }}" class="button button-outline right">
                 📥 Télécharger les photos
             </a>
         {% endif %}

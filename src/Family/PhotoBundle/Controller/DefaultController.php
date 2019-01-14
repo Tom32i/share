@@ -28,6 +28,21 @@ class DefaultController extends Controller
     }
 
     /**
+     * @Route("/{name}.zip", name="event_zip")
+     */
+    public function zipAction(Request $request, $name)
+    {
+        $browser = $this->container->get('family_photo.browser');
+        $event   = $browser->readEvent($name);
+
+        if (!$event || !$event['download']) {
+            throw $this->createNotFoundException('Event not found');
+        }
+
+        return new BinaryFileResponse($event['download']['path']);
+    }
+
+    /**
      * @Route("/{name}", name="event")
      * @Template()
      */

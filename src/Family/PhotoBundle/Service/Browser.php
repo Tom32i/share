@@ -84,12 +84,12 @@ class Browser
 
                 if (preg_match('#^.*\.(jpg|jpeg|png|gif)$#i', $entry)) {
 
-                    $exif = exif_read_data($file);
+                    $exif = @exif_read_data($file);
 
                     $photos[] = [
                         'name' => $entry,
                         'exif' => $exif,
-                        'date' => $exif ? $exif['DateTime'] : null,
+                        'date' => $exif && isset($exif['DateTime']) ? $exif['DateTime'] : null,
                     ];
 
                     if (!$date) {
