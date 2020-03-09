@@ -72,6 +72,7 @@ class Browser
         $title     = null;
         $private   = false;
         $date      = null;
+        $sort      = 'sortByDateAsc';
 
         if (!file_exists($directory) || !is_dir($directory)) {
             return null;
@@ -112,7 +113,11 @@ class Browser
                 }
 
                 if (preg_match('#^\.title$#i', $entry)) {
-                    $title = file_get_contents($file);
+                    $title =  trim(file_get_contents($file));
+                }
+
+                if (preg_match('#^\.sort$#i', $entry)) {
+                    $sort = trim(file_get_contents($file));
                 }
 
                 if (preg_match('#^\.private$#i', $entry)) {
@@ -123,7 +128,11 @@ class Browser
             closedir($handle);
         }
 
-        usort($photos, [$this, 'sortByDateAsc']);
+        try {
+            usort($photos, [$this, $sort]);
+        } catch (\Exception $exception) {
+            usort($photos, [$this, 'sortByDateAsc']);
+        }
 
         return [
             'name'     => $name,
@@ -160,5 +169,18 @@ class Browser
     protected function sortByDateAsc($a, $b)
     {
         return $a['date'] == $b['date'] ? 0 : ($a['date'] > $b['date'] ? 1 : -1);
+    }
+
+    /**
+     * Sort by name
+     *
+     * @param array $a
+     * @param array $b
+     *
+     * @return int
+     */
+    protected function sortByName($a, $b)
+    {
+        return $a['name'] == $b['name'] ? 0 : ($a['name'] > $b['name'] ? 1 : -1);
     }
 }
