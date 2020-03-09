@@ -33,6 +33,9 @@
                 />
             </a>
         {% endfor %}
+        {% for video in event.videos %}
+            <video controls src="{{ path('video', { event: event.name, video: video.name }) }}" />
+        {% endfor %}
         </div>
     </div>
 {% endspaceless %}
