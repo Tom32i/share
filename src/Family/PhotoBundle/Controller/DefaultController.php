@@ -89,4 +89,34 @@ class DefaultController extends Controller
 
         return $response;
     }
+
+    /**
+     * @Route("/{event}/{video}", name="video")
+     */
+    public function videoAction(Request $request, $event, $video)
+    {
+        $processor = $this->container->get('family_photo.processor');
+        $filepath = $processor->process(sprintf('%s/%s', $event, $video));
+
+        if (!$filepath) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new BinaryFileResponse(
+            $filepath,
+            200,  // status
+            [
+                'expires' => '30d',
+                'max_age' => 30 * 24 * 60 * 60,
+            ],
+            true, // public
+            null, // contentDisposition
+            true, // autoEtag
+            true  // autoLastModified
+        );
+
+        $response->isNotModified($request);
+
+        return $response;
+    }
 }

@@ -67,6 +67,7 @@ class Browser
     {
         $directory = sprintf('%s/%s', $this->path, $name);
         $photos    = [];
+        $videos    = [];
         $download  = null;
         $title     = null;
         $private   = false;
@@ -97,6 +98,12 @@ class Browser
                     }
                 }
 
+                if (preg_match('#^.*\.(mov)$#i', $entry)) {
+                    $videos[] = [
+                        'name' => $entry,
+                    ];
+                }
+
                 if (preg_match('#^.*\.zip$#i', $entry)) {
                     $download = [
                         'name' => $entry,
@@ -118,12 +125,15 @@ class Browser
 
         usort($photos, [$this, 'sortByDateAsc']);
 
+        dump($photos);
+
         return [
             'name'     => $name,
             'title'    => $title,
             'private'  => $private,
             'date'     => $date,
             'photos'   => $photos,
+            'videos'   => $videos,
             'download' => $download,
         ];
     }
