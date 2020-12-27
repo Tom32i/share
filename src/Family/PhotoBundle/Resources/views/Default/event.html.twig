@@ -29,7 +29,7 @@
                     title="{{ photo.name }}"
                     src="{{ path('full', { event: event.name, photo: photo.name }) }}"
                     width="{{ presets.full.w }}"
-                    height="{{ presets.full.h }}"
+                    {#height="{{ presets.full.h }}"#}
                 />
             </a>
         {% endfor %}

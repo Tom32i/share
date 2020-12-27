@@ -44,7 +44,7 @@ class Configuration implements ConfigurationInterface
                     ->end()
                     ->defaultValue([
                         'thumbnail' => ['w' => 720, 'h' => 480, 'dpr' => 1, 'fit' => 'crop'],
-                        'full' => ['w' => 1920, 'h' => 1280, 'dpr' => 1, 'fit' => 'crop'],
+                        'full' => ['w' => 1920, 'h' => 1280, 'dpr' => 1, 'fit' => 'contain'],
                     ])
                 ->end()
             ->end();
