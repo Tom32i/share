@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title event.title %}
+
+{% block body %}
+<div class="container">
+    {#% if event.download %}
+        <a href="{{ path('event_zip', { name: event.name }) }}" title="Télécharger {{ event.download.name }}" class="button button-outline right">
+            📥 Télécharger les photos
+        </a>
+    {% endif %#}
+
+    <h2 class="title">
+        {{ event.title }}
+        <small>{{ event.date|date('d/m/Y') }}</small>
+    </h2>
+
+    <div class="content">
+        {% for index, image in event.images %}
+            <a id="image-{{ index }}" class="image" href="{{ download(image.path) }}" download>
+                {% include 'event/image.html.twig' with { image: image } only %}
+            </a>
+        {% endfor %}
+
+        {% for video in event.videos %}
+            <video src="{{ download(video.path) }}" controls preload="metadata"></video>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

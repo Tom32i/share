@@ -1,0 +1,127 @@
+####################################################################
+# !!! REMINDER !!!                                                 #
+# Don't forget to run `manala up` each time you update this file ! #
+####################################################################
+
+manala:
+    recipe: elao.app
+
+##########
+# System #
+##########
+
+system:
+    version: 10
+    hostname: share.vm
+    php:
+        version: "8.0"
+        extensions:
+          # Symfony
+          - intl
+          - curl
+          - mbstring
+          - xml
+        configs:
+            - template: php/opcache.ini.j2
+            - template: php/app.ini.j2
+              config:
+                  date.timezone: UTC
+    nodejs:
+        version: 16
+    files:
+        - path: /srv/app/var/log
+          src: /srv/log
+          state: link_directory
+        - path: /srv/app/var/cache
+          src: /srv/cache
+          state: link_directory
+    nginx:
+        configs:
+            - template: nginx/gzip.j2
+            - template: nginx/php_fpm_app.j2
+            # App
+            - file: app.conf
+              config: |
+                  map $http_host $app_env {
+                      ~^test\. test;
+                      ~^prod\. prod;
+                  }
+                  server {
+                      server_name ~.;
+                      root /srv/app/public;
+                      access_log /srv/log/nginx.access.log;
+                      error_log /srv/log/nginx.error.log;
+                      include conf.d/gzip;
+                      location / {
+                          try_files $uri /index.php$is_args$args;
+                      }
+                      location ~ ^/index\.php(/|$) {
+                          include conf.d/php_fpm_app;
+                          internal;
+                          # Env
+                          fastcgi_param APP_ENV $app_env if_not_empty;
+                      }
+                  }
+    ssh:
+        client:
+            config: |
+                Host tom32i.fr
+                    User tom32i
+                    ForwardAgent yes
+                Host deployer.vm
+                    User tom32i
+                    ForwardAgent yes
+
+############
+# Releases #
+############
+
+releases:
+  - &release
+    #app: api
+    mode: production
+    repo: git@tom32i.fr:release/share.git
+    # Release
+    release_tasks:
+      - shell: make install@production
+      - shell: composer dump-env --empty prod
+      - shell: make build@production
+    release_add:
+      - .env.local.php
+      - bin
+      - composer.*
+      - config
+      - Makefile
+      - public
+      - src
+      - templates
+      - translations
+      #- migrations
+      - vendor
+    # Deploy
+    deploy_hosts:
+      - ssh_host: tom32i.fr
+    deploy_dir: /home/tom32i/share
+    deploy_shared_dirs:
+      - var/log
+      - var/sessions
+      - var/share
+    deploy_shared_files:
+      - .env.local.php
+    deploy_tasks:
+      - shell: make warmup@production
+    deploy_post_tasks:
+      - shell: sudo /bin/systemctl reload php8.0-fpm
+
+  - <<: *release
+    mode: staging
+    # Release
+    release_tasks:
+      - shell: make install@staging
+      - shell: composer dump-env --empty prod
+      - shell: make build@staging
+    # Deploy
+    deploy_hosts:
+      - ssh_host: deployer.vm
+    deploy_tasks:
+      - shell: make warmup@staging
