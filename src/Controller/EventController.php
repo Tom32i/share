@@ -21,7 +21,7 @@ class EventController extends AbstractController
         $event = $this->browser->read($slug, ['[slug]' => true]);
 
         return $this->render('event/show.html.twig', [
-            'event' => $event,
+            'event' => dump($event),
         ]);
     }
 }

@@ -127,10 +127,10 @@ lint-yaml:
 	bin/console lint:yaml translations config
 
 lint-eslint:
-	npx eslint assets/js --ext .js,.json --fix
+	npx eslint assets/script --ext .js,.json --fix
 
 lint-stylelint:
-	npx stylelint 'assets/css/**/*.scss' --fix
+	npx stylelint 'assets/style/**/*.scss' --fix
 
 ##########
 # Upload #

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title event.title %}
+{% block title event.title|default(event.slug) %}
 
 {% block body %}
 <div class="container">
@@ -11,8 +11,10 @@
     {% endif %#}
 
     <h2 class="title">
-        {{ event.title }}
-        <small>{{ event.date|date('d/m/Y') }}</small>
+        {{ event.title|default(event.slug) }}
+        {% if event.date is defined %}
+            <small>{{ event.date|date('d/m/Y') }}</small>
+        {% endif %}
     </h2>
 
     <div class="content">
