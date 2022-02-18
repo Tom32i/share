@@ -4,7 +4,7 @@
   block:
 
     - name: strategy/synchronize > Synchronize
-      synchronize:
+      ansible.posix.synchronize:
         src:  "{{ deploy_strategy_synchronize_src }}"
         dest: "{{ deploy_helper.new_release_path }}/"
         rsync_opts: "{{ deploy_strategy_synchronize_rsync_options }}"

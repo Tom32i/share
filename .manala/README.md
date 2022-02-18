@@ -1,15 +1,18 @@
 ---
-title: Elao - App
+title: Elao - App - Docker
 tableOfContent: 3
 ---
 
 ## Requirements
 
 * Make
-* Vagrant 2.2.10+
-* Landrush 1.3.2+
-* VirtualBox 6.1.12+
-* Docker Desktop 2.2.0+
+
+MacOS
+
+* Docker Desktop 4.3.2+
+`brew install docker`
+* Mutagen Compose 0.13.0+
+`brew install mutagen-io/mutagen/mutagen-compose`
 
 ## Overview
 
@@ -19,7 +22,7 @@ This recipe contains some helpful scripts in the context of a php/nodejs app, su
 
 ```
 $ cd [workspace]
-$ manala init -i elao.app [project]
+$ manala init -i elao.app.docker [project]
 ```
 
 ## Quick start
@@ -29,7 +32,7 @@ In a shell terminal, change directory to your app, and run the following command
 ```shell
 cd /path/to/my/app
 manala init
-Select the "elao.app" recipe
+Select the "elao.app.docker" recipe
 ```
 
 Edit the `Makefile` at the root directory of your project and add the following lines at the beginning of the file:
@@ -47,7 +50,7 @@ manala up
 ```
 
 !!! Warning
-    Don't forget to run the `manala up` command each time you update the 
+    Don't forget to run the `manala up` command each time you update the
     `.manala.yaml` file to actually apply your changes !!!
 
 From now on, if you execute the `make help` command in your console, you should obtain the following output:
@@ -64,7 +67,7 @@ Docker:
 App:
 ```
 
-## VM interaction
+## Environment interaction
 
 In your app directory.
 
@@ -73,43 +76,40 @@ Initialise your app:
 make setup
 ```
 
-Start VM:
+Start environment:
 ```bash
 make up
 ```
 
-Stop VM:
+Stop environment:
 ```bash
 make halt
 ```
 
-VM shell:
+Environment shell:
 ```bash
-make ssh
+make sh
 ```
 
-Box update:
-```bash
-cd .manala && vagrant box update && cd -
-```
+## Configuration
 
-## System
-
-Here is an example of a system configuration in `.manala.yaml`:
+Here is an example of a configuration in `.manala.yaml`:
 
 ```yaml
+###########
+# Project #
+###########
+
+project:
+    name: app
+    ports: 12300 # Mulitple of 100, >= 2000, <= 64000
+
 ##########
 # System #
 ##########
 
 system:
-    version: 10
-    hostname: app.vm
-    #memory: 4096 # Optional
-    #cpus: 2 # Optional
-    #motd: # Optional
-    #    template: motd/cow.j2
-    #    message: Foo bar
+    version: 11
     #timezone: Etc/UTC # Optional
     #locales: # Optional
     #    default: C.UTF-8
@@ -121,7 +121,7 @@ system:
         #preferences: [] # Optional
         packages:
           - pdftk
-          - https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb
+          - https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_{{ apt_architecture }}.deb
     files:
       - path: /srv/app/var/log
         src: /srv/log
@@ -167,7 +167,7 @@ system:
         #               }
         #           }
     php:
-        version: "8.0"
+        version: 8.1
         # composer:
         #   version: 1 # Optional
         extensions:
@@ -228,7 +228,7 @@ system:
     #             command=/bin/foo
     # MariaDB
     mariadb:
-        version: 10.5
+        version: 10.6
     # ...*OR* MySQL...
     mysql:
         version: "8.0"
@@ -262,8 +262,19 @@ system:
                 Host *.elao.run
                     User app
                     ForwardAgent yes
+    docker:
+        services:
+            whoami:
+                image: traefik/whoami:v1.7.1
+                network_mode: service:app
+                profiles:
+                    - development
+            # App ports
+            app:
+                ports:
+                    # whoami
+                    - 12345:80
 ```
-
 
 ## Integration
 
@@ -340,11 +351,11 @@ integration:
 
 ### Github Actions
 
-The recipes generates a `Dockerfile` and a `docker-compose.yaml` file that can 
+The recipes generates a `Dockerfile` and a `docker-compose.yaml` file that can
 be used to provide a fully-fledged environnement according to your project needs.
 
-The [Elao/manala-ci-action](https://github.com/Elao/manala-ci-action) rely on 
-this to allow you running any CLI command in this environnement, 
+The [Elao/manala-ci-action](https://github.com/Elao/manala-ci-action) rely on
+this to allow you running any CLI command in this environnement,
 using Github Action workflows.
 
 ### Common integration tasks
@@ -368,9 +379,9 @@ install@integration:
 	# Yarn
 	yarn install --color=always --no-progress
 
-###########
+#########
 # Build #
-###########
+#########
 
 ...
 
@@ -494,7 +505,6 @@ releases:
     #   - package.json
     #   - phpunit.xml.dist
     #   - README.md
-    #   - Vagrantfile
     #   - webpack.config.js
     #   - yarn.lock
 
@@ -515,7 +525,7 @@ releases:
     #deploy_removed:
     #  - web/app_dev.php
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.0-fpm
+      - shell: sudo /bin/systemctl reload php8.1-fpm
       #- shell: sudo /bin/systemctl restart supervisor
 
   - << : *release
@@ -684,7 +694,7 @@ parameters:
 
 !!! Note
     Note that the path to the secret will slightly differ from what the Vault server will display:    
-    if the path is `MyApp/production/env` on the Vault server, 
+    if the path is `MyApp/production/env` on the Vault server,
     it will become `MyApp/data/production/env` in the template
 
 See [Go Template syntax](https://docs.gomplate.ca/syntax/) for more info.
@@ -701,20 +711,11 @@ In  order for https to work properly, you must:
     ```shell
     $ sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" .manala/certificates/ca.crt
     ```
-   
-2. generate a project certificate (one time *by* project, inside vagrant, remember to commit them right after)
+
+2. generate a project certificate (one time *by* project, remember to commit them right after)
 
     ```shell
     ⇒  make provision.certificates
     ```
 
 3. For firefox only, browse to `about:config` and ensure `security.enterprise_roots.enabled` value is set to true
-
-## Tips, Tricks, and Tweaks
-
-* [Vagrant root privilege requirement](https://www.vagrantup.com/docs/synced-folders/nfs.html#root-privilege-requirement)
-* Debug ansible provisioning:
-
-  ```shell
-  ansible-galaxy collection install manala.roles --collections-path /vagrant/ansible/collections
-  ```

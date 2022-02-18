@@ -4,7 +4,7 @@
 -include .manala/Makefile
 
 define setup
-	$(VAGRANT_MAKE) install build db
+	$(DOCKER_MAKE) install build
 endef
 
 ###########
@@ -58,14 +58,6 @@ build:
 
 build@staging: build
 build@production: build
-
-cache: export APP_ENV = prod
-cache:
-	bin/console showcase:cache-generate
-
-clear-cache: export APP_ENV = prod
-clear-cache:
-	bin/console showcase:cache-clear
 
 ##########
 # Warmup #
@@ -159,6 +151,7 @@ download@production:
 # Custom #
 ##########
 
+## New share folder
 share:
 	bin/console app:share
 
@@ -169,7 +162,9 @@ cache-generate:
 cache-clear:
 	bin/console showcase:cache-clear
 
+## Regenerate all caches
 cache-regenerate: cache-clear cache-generate
 
+## Normalize all share folders
 normalize:
 	bin/console showcase:normalize-names

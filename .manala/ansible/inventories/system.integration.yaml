@@ -1,0 +1,33 @@
+system:
+
+    hosts:
+
+        ###############
+        # Integration #
+        ###############
+
+        integration:
+
+            # Apt
+            system_apt: true
+            system_apt_packages:
+                - xz-utils
+                - rsync
+                - wget
+                - less
+                - ssl-cert
+                - procps
+                - vim-tiny
+            # Git
+            system_git: true
+            # Locales
+            system_locales: true
+            # NodeJS
+            system_nodejs: true
+            # Php
+            system_php: true
+            system_php_sapis:
+              - cli
+            # Ssh
+            system_ssh: true
+            system_ssh_client_config_template: ssh/integration/ssh_config.j2

@@ -4,15 +4,22 @@
 ####################################################################
 
 manala:
-    recipe: elao.app
+    recipe: elao.app.docker
+
+###########
+# Project #
+###########
+
+project:
+    name: share
+    ports: 2200
 
 ##########
 # System #
 ##########
 
 system:
-    version: 10
-    hostname: share.vm
+    version: 11
     php:
         version: "8.0"
         extensions:

@@ -24,7 +24,7 @@
 {{ parameters | manala.roles.supervisor_config_parameter('startretries', default=20) }}
 {{ parameters | manala.roles.supervisor_config_parameter('stderr_logfile_maxbytes', default=0) }}
 {{ parameters | manala.roles.supervisor_config_parameter('stdout_logfile_maxbytes', default=0) }}
-{{ parameters | manala.roles.supervisor_config_parameter('user', default='vagrant') }}
+{{ parameters | manala.roles.supervisor_config_parameter('user', default=system_app_user) }}
 {{- parameters | manala.roles.supervisor_config_section(exclude=[
   'autorestart',
   'autostart',

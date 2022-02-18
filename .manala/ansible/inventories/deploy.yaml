@@ -6,7 +6,6 @@ deploy:
                 01@production:
                     # Ansible
                     ansible_host: tom32i.fr
-                    ansible_python_interpreter: auto_silent
             vars:
                 deploy_releases: 3
                 deploy_strategy: git
@@ -29,7 +28,6 @@ deploy:
                 01@staging:
                     # Ansible
                     ansible_host: deployer.vm
-                    ansible_python_interpreter: auto_silent
             vars:
                 deploy_releases: 3
                 deploy_strategy: git

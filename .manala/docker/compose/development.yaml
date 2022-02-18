@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+
+    ###########
+    # MailHog #
+    ###########
+
+    mailhog:
+        image: mailhog/mailhog:v1.0.1
+        entrypoint:
+            - /bin/sh
+            - -c
+            - MailHog -smtp-bind-addr 0.0.0.0:25 &>/dev/null
+        network_mode: service:app
+
+    #######
+    # App #
+    #######
+
+    app:
+        build:
+            args:
+                MANALA_INIT: sysv
+                MANALA_PROVISION: ansible
+                MANALA_PROVISION_LIMIT: development
+        tty: true
+        tmpfs:
+           - /tmp
+           - /run
+        ports:
+            - 2225:8025
+            - 2280:80
+            - 2243:443

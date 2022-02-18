@@ -141,7 +141,3 @@ echo
 {% include 'functions/nginx_timeout.j2' %}
 
 {% include 'functions/ngrok_http.j2' %}
-
-if [ -d ${DIR:-{{ system_app_dir }}} ]; then
-  cd ${DIR:-{{ system_app_dir }}}
-fi

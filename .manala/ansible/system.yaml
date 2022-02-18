@@ -7,23 +7,6 @@
 
   vars:
 
-    ############
-    # Accounts #
-    ############
-
-    manala_accounts_groups:
-      - group: docker
-        system: true
-        state: "{{ 'present' if (system_docker) else 'absent' }}"
-
-    manala_accounts_users:
-      - user: "{{ system_app_user }}"
-        group: "{{ system_app_group }}"
-        groups: "{{
-          ['docker'] if (system_docker) else []
-        }}"
-        state: "{{ 'present' if (system_app) else 'absent' }}"
-
     ################
     # Alternatives #
     ################
@@ -39,12 +22,6 @@
     manala_apt:
       update: true
 
-    manala_apt_configs:
-      - file: archive
-        config: |
-          Acquire::Check-Valid-Until "false";
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-
     manala_apt_components:
       - main
 
@@ -55,32 +32,6 @@
 
     manala_apt_preferences_exclusive: true
     manala_apt_preferences:
-      # Jessie
-      - preference: git@backports
-        state: "{{ 'present' if (system_git and (ansible_distribution_release in ['jessie'])) else 'ignore' }}"
-      - preference: python-websocket@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-ipaddress@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-backports.ssl-match-hostname@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-docker@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-httplib2@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-jinja2@manala
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      # Jessie - Python Cryptography
-      - preference: python-cryptography@backports
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-pyasn1@backports
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-setuptools@backports
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      - preference: python-pkg-resources@backports
-        state: "{{ 'present' if (ansible_distribution_release in ['jessie']) else 'ignore' }}"
-      # Ansible
-      - ansible@ansible
       # NodeJS
       - preference: "nodejs@{{
           'nodesource_' ~ system_nodejs_version|string|replace('.', '_') if (system_nodejs) else
@@ -99,9 +50,6 @@
           'default'
         }}"
         state: "{{ 'present' if (system_elasticsearch) else 'ignore' }}"
-      # Docker
-      - preference: docker@docker
-        state: "{{ 'present' if (system_docker) else 'ignore' }}"
       # InfluxDB
       - preference: influxdb@influxdata
         state: "{{ 'present' if (system_influxdb) else 'ignore' }}"
@@ -110,11 +58,10 @@
         state: "{{ 'present' if (system_nginx) else 'ignore' }}"
       # Supervisor
       - preference: "supervisor@{{
-          'manala' if (ansible_distribution_release in ['jessie']) else
           'backports' if (ansible_distribution_release in ['stretch']) else
           'default'
         }}"
-        state: "{{ 'present' if (system_supervisor and (ansible_distribution_release in ['jessie', 'stretch'])) else 'ignore' }}"
+        state: "{{ 'present' if (system_supervisor and (ansible_distribution_release in ['stretch'])) else 'ignore' }}"
       # MySQL
       - preference: "mysql@{{
           'mysql_' ~ system_mysql_version|string|replace('.', '_') if (system_mysql) else
@@ -162,40 +109,6 @@
       user: "{{ system_app_user }}"
     manala_cron_files: "{{ system_cron_files }}"
 
-    ##########
-    # Docker #
-    ##########
-
-    manala_docker_containers:
-      - name: mailhog
-        image: mailhog/mailhog:v1.0.1
-        state: started
-        restart_policy: unless-stopped
-        ports:
-          - 25:1025
-          - 8025:8025
-      - name: phpmyadmin
-        image: phpmyadmin/phpmyadmin
-        state: "{{ 'started' if (system_mysql or system_mariadb) else 'absent' }}"
-        restart_policy: unless-stopped
-        env:
-          PMA_USER: root
-          # Default docker host ip
-          PMA_HOST: 172.17.0.1
-          UPLOAD_LIMIT: 64M
-        ports:
-          - 1979:80
-      - name: phpredisadmin
-        image: erikdubbelboer/phpredisadmin
-        state: "{{ 'started' if (system_redis) else 'absent' }}"
-        restart_policy: unless-stopped
-        env:
-          # Default docker host ip
-          REDIS_1_HOST: 172.17.0.1
-        ports:
-          - 1981:80
-      - "{{ system_docker_containers }}"
-
     #################
     # Elasticsearch #
     #################
@@ -235,12 +148,17 @@
       - path: "^{{ system_app_sessions_dir }}"
         user: "{{ system_app_user }}"
         group: "{{ system_app_group }}"
+      - path: "^{{ system_app_release_dir }}"
+        user: "{{ system_app_user }}"
+        group: "{{ system_app_group }}"
     manala_files_attributes:
       - path: "{{ system_app_log_dir }}"
         state: directory
       - path: "{{ system_app_cache_dir }}"
         state: directory
       - path: "{{ system_app_sessions_dir }}"
+        state: directory
+      - path: "{{ system_app_release_dir }}"
         state: directory
       - path: /usr/share/nginx/html/404.html
         template: nginx/html/404.html.j2
@@ -277,9 +195,9 @@
     ########
 
     manala_java_version: "{{ {
-        'jessie': '8',
         'stretch': '8',
         'buster': '11',
+        'bullseye': '11',
       }[ansible_distribution_release]
     }}"
 
@@ -287,18 +205,7 @@
     # Locales #
     ###########
 
-    manala_locales_codes_default: "{{ system_locales_default }}"
     manala_locales_codes: "{{ system_locales_codes }}"
-
-    ########
-    # Motd #
-    ########
-
-    manala_motd_scripts_exclusive: true
-    manala_motd_scripts:
-      - file: 10-motd
-        template: "{{ system_motd_template }}"
-        message: "{{ system_motd_message }}"
 
     ###################
     # MySQL / MariaDB #
@@ -310,28 +217,12 @@
       system_mysql_install_packages
     }}"
 
-    manala_mysql_configs_dir: "{{
-      system_mariadb_configs_dir
-        if (system_mariadb) else
-      system_mysql_configs_dir
-    }}"
-    manala_mysql_configs:
-      - template: mysql/zz-mysqld.cnf.j2
+    manala_mysql_server: false
 
-    manala_mysql_users:
-      # Create a password-less/any-host root user...
-      - name: root
-        password: ~
-        host: "%"
-        priv: "*.*:ALL,GRANT"
-      # ...then remove anonymous localhost user (MySQL 5.6)
-      - name: ''
-        host: localhost
-        state: absent
-      # ...then remove root localhost user (socket based authentication on MySQL 5.7+/MariaDB)
-      - name: root
-        host: localhost
-        state: absent
+    manala_mysql_config: |
+      [client]
+      host = 127.0.0.1
+      user = root
 
     ###########
     # Network #
@@ -377,7 +268,6 @@
       - user: "{{ system_app_user }}"
         group: "{{ system_app_group }}"
         template: ohmyzsh/.zshrc.j2
-        state: "{{ 'present' if (system_app) else 'ignore' }}"
 
     #######
     # Php #
@@ -411,11 +301,10 @@
       - extension: xdebug
         enabled: false
       - "{{ system_php_extensions }}"
-    manala_php_extensions_pecl_versioned: "{{ (ansible_distribution_release not in ['jessie']) or system_php_dotdeb }}"
 
     manala_php_configs_exclusive: true
     manala_php_configs:
-      - template: php/50-xdebug.ini.j2
+      - template: php/xdebug.ini.j2
       - "{{ system_php_configs }}"
 
     #########
@@ -431,17 +320,15 @@
     # Ssh #
     #######
 
-    manala_ssh_server: "{{ system_ssh_server }}"
-    manala_ssh_server_config_template: ssh/sshd_config.j2
-    manala_ssh_server_config:
-      AcceptEnv: DIR
+    manala_ssh_server: false
 
     manala_ssh_client_config_template: "{{ system_ssh_client_config_template }}"
     manala_ssh_client_config: "{{ system_ssh_client_config }}"
 
     manala_ssh_known_hosts:
       - github.com
-      - git.elao.com
+      - host: git.elao.com
+        file: "{{ playbook_dir ~ '/templates/ssh/keys/git.elao.com' }}"
 
     ##############
     # Supervisor #
@@ -493,11 +380,6 @@
       tags: [network]
 
     - import_role:
-        name: accounts
-      when: system_accounts
-      tags: [accounts]
-
-    - import_role:
         name: locales
       when: system_locales
       tags: [locales]
@@ -506,11 +388,6 @@
         name: ssh
       when: system_ssh
       tags: [ssh]
-
-    - import_role:
-        name: motd
-      when: system_motd
-      tags: [motd]
 
     - import_role:
         name: timezone
@@ -611,11 +488,6 @@
         name: elasticsearch
       when: system_elasticsearch
       tags: [elasticsearch]
-
-    - import_role:
-        name: docker
-      when: system_docker
-      tags: [docker]
 
     - import_role:
         name: influxdb

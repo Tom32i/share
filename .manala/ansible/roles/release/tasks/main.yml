@@ -1,7 +1,7 @@
 ---
 
 - name: git > Get url
-  shell: >
+  ansible.builtin.shell: >
     git config --get remote.origin.url
   args:
     chdir: "{{ release_git_dir }}"
@@ -9,7 +9,7 @@
   register: __release_git_url
 
 - name: git > Get informations
-  git:
+  ansible.builtin.git:
     repo: "{{ __release_git_url.stdout }}"
     dest: "{{ release_git_dir }}"
     clone: false
@@ -17,7 +17,7 @@
   register: __release_git
 
 - name: Release directory "{{ release_dir }}"
-  shell: >
+  ansible.builtin.shell: >
     rm --recursive --force {{ release_dir }}
     && mkdir -p {{ release_dir }}
   args:
@@ -25,7 +25,7 @@
   tags: log_failed
 
 - name: git > Export repository
-  shell: >
+  ansible.builtin.shell: >
     git archive HEAD{{
       ' ' ~ release_target_dir if (release_target_dir) else ''
     }}
@@ -40,12 +40,12 @@
   tags: log_failed
 
 - name: tasks
-  include_tasks: task/{{ item.task }}.yml
+  ansible.builtin.include_tasks: task/{{ item.task }}.yml
   loop: "{{ query('release_tasks', release_tasks) }}"
   when: item.when
 
 - name: git > Init "{{ release_repo }}" on branch "{{ release_version }}"
-  shell: >
+  ansible.builtin.shell: >
     git init
     && git checkout -b {{ release_version }}
     && git remote add origin {{ release_repo }}
@@ -65,7 +65,7 @@
   tags: log_failed
 
 - name: Remove
-  shell: >
+  ansible.builtin.shell: >
     rm --recursive --force {{ [release_dir, item]|join('/') }}
   args:
     warn: false
@@ -73,7 +73,7 @@
   loop: "{{ release_removed }}"
 
 - name: git > Add all
-  shell: >
+  ansible.builtin.shell: >
     git add --force --all
   args:
     chdir: "{{ release_dir }}"
@@ -81,7 +81,7 @@
   tags: log_failed
 
 - name: git > Add
-  shell: >
+  ansible.builtin.shell: >
     git add --force {{ item }}
   args:
     chdir: "{{ release_dir }}"
@@ -89,7 +89,7 @@
   tags: log_failed
 
 - name: git > Commit
-  shell: |
+  ansible.builtin.shell: |
     git commit --allow-empty -m "{{
       ansible_date_time.year
       ~ ansible_date_time.month
@@ -106,7 +106,7 @@
   tags: log_failed
 
 - name: git > Push "{{ release_version }}"
-  shell: >
+  ansible.builtin.shell: >
     git push --set-upstream origin {{ release_version }}
     && git push origin HEAD
   args:

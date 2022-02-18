@@ -4,7 +4,7 @@
   block:
 
     - name: task/shell > "{{ item.options }}" in "{{ item.dir }}"
-      shell: >
+      ansible.builtin.shell: >
         {{ item.options }}
       args:
         chdir: "{{ item.dir }}"
