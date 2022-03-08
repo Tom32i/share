@@ -12,7 +12,7 @@ manala:
 
 project:
     name: share
-    ports: 2200
+    ports_prefix: 22
 
 ##########
 # System #

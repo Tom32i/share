@@ -29,6 +29,10 @@ services:
            - /tmp
            - /run
         ports:
+            # Usuals
+            - 2288:8080
+            # MailHog
             - 2225:8025
+            # Nginx
             - 2280:80
             - 2243:443

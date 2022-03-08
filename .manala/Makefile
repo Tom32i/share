@@ -5,6 +5,16 @@ _ROOT = $(if $(filter .,$(_DIR)),1)
 # Relative current dir ("."|"foo"|"foo/bar"|…)
 _CURRENT_DIR = $(patsubst ./%,%,.$(patsubst $(realpath $(CURDIR)/$(_DIR))%,%,$(CURDIR)))
 
+###########
+# Project #
+###########
+
+PROJECT_NAME = share
+
+define project_host
+$(PROJECT_NAME).ela.ooo$(if $(1),:22$(shell printf "%02d" $(1)))
+endef
+
 -include $(_DIR)/.manala/make/text.mk
 -include $(_DIR)/.manala/make/help.mk
 -include $(_DIR)/.manala/make/os.mk
@@ -29,7 +39,8 @@ HELP += $(call help,setup,                 Setup environment (DEBUG))
 setup:
 	$(_docker_compose) up \
 		--build \
-		--detach
+		--detach \
+		--wait
 	$(setup)
 	$(MAKE) help
 endif
@@ -37,6 +48,7 @@ endif
 HELP += $(call help,up,                    Start the environment)
 up:
 	$(_docker_compose) start
+	$(MAKE) help.project
 
 HELP += $(call help,halt,                  Stop the environment)
 halt:
@@ -45,6 +57,7 @@ halt:
 HELP += $(call help,reload,                Restart the environment)
 reload:
 	$(_docker_compose) restart
+	$(MAKE) help.project
 
 HELP += $(call help,sh,                    Open shell to the environment)
 sh:
@@ -149,8 +162,7 @@ deploy@staging:
 # Help #
 ########
 
-HELP_FOOTER = \n\n$(COLOR_COMMENT)┏(°.°)┛┗(°.°)┓$(COLOR_RESET) ♪♫ Let's party ♫♪ $(COLOR_COMMENT)┗(°.°)┛┏(°.°)┓$(COLOR_RESET)\n
-HELP_FOOTER += $(call help,Http,         http://share.ela.ooo:2280)
-HELP_FOOTER += $(call help,Https,        https://share.ela.ooo:2243)
-HELP_FOOTER += $(call help,MailHog,      http://share.ela.ooo:2225)
-HELP_FOOTER += \n
+HELP_PROJECT = $(COLOR_COMMENT)┏(°.°)┛┗(°.°)┓$(COLOR_RESET) ♪♫ Let's party ♫♪ $(COLOR_COMMENT)┗(°.°)┛┏(°.°)┓$(COLOR_RESET)\n
+HELP_PROJECT += $(call help,Http,         http://$(call project_host, 80))
+HELP_PROJECT += $(call help,Https,        https://$(call project_host, 43))
+HELP_PROJECT += $(call help,MailHog,      http://$(call project_host, 25))

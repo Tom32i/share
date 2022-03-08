@@ -55,8 +55,6 @@ system:
         system_influxdb_databases: []
         system_influxdb_users: []
         system_influxdb_privileges: []
-        # Java
-        system_java: "{{ system_elasticsearch }}"
         # Locales
         system_locales: false
         system_locales_codes: []
@@ -68,7 +66,8 @@ system:
         # MySQL
         system_mysql: false
         system_mysql_version: null
-        system_mysql_install_packages: ~
+        system_mysql_install_packages:
+            - default-mysql-client
         # Network
         system_network: false
         # Nginx
@@ -110,7 +109,7 @@ system:
         system_ohmyzsh: false
         # Php
         system_php: false
-        system_php_version: 8.0
+        system_php_version: "8.0"
         system_php_composer: "{{ system_php }}"
         system_php_composer_version: null
         system_php_sapis:

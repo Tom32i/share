@@ -44,30 +44,20 @@
       # Php
       - preference: php@sury_php
         state: "{{ 'present' if (system_php) else 'ignore' }}"
-      # Elasticsearch
-      - preference: "elasticsearch@{{
-          'elasticsearch_' ~ system_elasticsearch_version|string|replace('.', '_') if (system_elasticsearch) else
-          'default'
-        }}"
-        state: "{{ 'present' if (system_elasticsearch) else 'ignore' }}"
+      - preference: symfony-cli@symfony
+        state: "{{ 'present' if (system_php) else 'ignore' }}"
       # InfluxDB
       - preference: influxdb@influxdata
         state: "{{ 'present' if (system_influxdb) else 'ignore' }}"
       # Nginx
       - preference: nginx@nginx
-        state: "{{ 'present' if (system_nginx) else 'ignore' }}"
+        state: "{{ 'present' if (system_nginx and (ansible_distribution_release not in ['stretch'])) else 'ignore' }}"
       # Supervisor
       - preference: "supervisor@{{
           'backports' if (ansible_distribution_release in ['stretch']) else
           'default'
         }}"
         state: "{{ 'present' if (system_supervisor and (ansible_distribution_release in ['stretch'])) else 'ignore' }}"
-      # MySQL
-      - preference: "mysql@{{
-          'mysql_' ~ system_mysql_version|string|replace('.', '_') if (system_mysql) else
-          'default'
-        }}"
-        state: "{{ 'present' if (system_mysql) else 'ignore' }}"
       # MariaDB
       - preference: "mariadb@{{
           'mariadb_' ~ system_mariadb_version|string|replace('.', '_') if (system_mariadb) else
@@ -80,6 +70,9 @@
           (system_redis_version|string == '5.0') and (ansible_distribution_release in ['stretch'])
           or (system_redis_version|string == '6.0') and (ansible_distribution_release in ['buster'])
         ) else 'ignore' }}"
+      # GitHub CLI
+      - preference: gh@github_cli
+        state: "{{ 'present' if (system_git) else 'ignore' }}"
       - "{{ system_apt_preferences }}"
 
     manala_apt_holds_exclusive: true
@@ -87,6 +80,15 @@
       - "{{ system_apt_holds }}"
 
     manala_apt_packages:
+      - xz-utils
+      - rsync
+      - wget
+      - less
+      - ssl-cert
+      - bzip2
+      - iproute2
+      - "{{ ['symfony-cli'] if (system_php) else [] }}"
+      - "{{ ['gh'] if (system_git) else [] }}"
       - "{{ system_apt_packages }}"
 
     ################
@@ -108,14 +110,6 @@
     manala_cron_files_defaults:
       user: "{{ system_app_user }}"
     manala_cron_files: "{{ system_cron_files }}"
-
-    #################
-    # Elasticsearch #
-    #################
-
-    manala_elasticsearch_version: "{{ system_elasticsearch_version }}"
-
-    manala_elasticsearch_plugins: "{{ system_elasticsearch_plugins }}"
 
     ###############
     # Environment #
@@ -189,17 +183,6 @@
     manala_influxdb_users: "{{ system_influxdb_users }}"
 
     manala_influxdb_privileges: "{{ system_influxdb_privileges }}"
-
-    ########
-    # Java #
-    ########
-
-    manala_java_version: "{{ {
-        'stretch': '8',
-        'buster': '11',
-        'bullseye': '11',
-      }[ansible_distribution_release]
-    }}"
 
     ###########
     # Locales #
@@ -445,11 +428,6 @@
       tags: [composer]
 
     - import_role:
-        name: symfony_cli
-      when: system_symfony_cli
-      tags: [symfony]
-
-    - import_role:
         name: certificates
       when: system_certificates
       tags: [certificates, nginx]
@@ -478,16 +456,6 @@
         name: mysql
       when: system_mysql or system_mariadb
       tags: [mysql, mariadb]
-
-    - import_role:
-        name: java
-      when: system_java
-      tags: [java]
-
-    - import_role:
-        name: elasticsearch
-      when: system_elasticsearch
-      tags: [elasticsearch]
 
     - import_role:
         name: influxdb

@@ -29,7 +29,7 @@ _GIT_CONFIG = $(wildcard ~/.gitconfig)
 
 _DOCKER_COMPOSE = $(if $(_MUTAGEN_COMPOSE), \
 	$(_MUTAGEN_COMPOSE), \
-	$(shell command -v docker-compose) \
+	$(shell command -v docker) compose \
 )
 _DOCKER_COMPOSE_ENV = \
 	DOCKER_BUILDKIT=1 \
@@ -40,11 +40,12 @@ _DOCKER_COMPOSE_FILE = \
  	$(_DIR)/.manala/docker/compose/development.yaml \
 	$(if $(_MUTAGEN_COMPOSE),$(_DIR)/.manala/docker/compose/mutagen.yaml) \
 	$(if $(_GIT_CONFIG),$(_DIR)/.manala/docker/compose/git.yaml)
-_DOCKER_COMPOSE_PROJECT_NAME = share
+_DOCKER_COMPOSE_PROJECT_NAME = $(PROJECT_NAME)
 _DOCKER_COMPOSE_PROJECT_DIRECTORY = $(_DIR)/.manala/docker
 _DOCKER_COMPOSE_PROFILE = development
 _DOCKER_COMPOSE_EXEC_SERVICE = app
 _DOCKER_COMPOSE_EXEC_USER = app
+_DOCKER_COMPOSE_EXEC_WORKDIR = /srv/app/$(_CURRENT_DIR)
 
 # Debug
 ifdef DEBUG
@@ -91,5 +92,6 @@ endif
 define _docker_compose_exec
 	$(_docker_compose) exec \
 		$(if $(_DOCKER_COMPOSE_EXEC_USER),--user $(_DOCKER_COMPOSE_EXEC_USER)) \
+		$(if $(_DOCKER_COMPOSE_EXEC_WORKDIR),--workdir $(_DOCKER_COMPOSE_EXEC_WORKDIR)) \
 		$(_DOCKER_COMPOSE_EXEC_SERVICE)
 endef
