@@ -1,7 +1,7 @@
 ---
 
 - name: git > Get url
-  shell: >
+  ansible.builtin.shell: >
     git config --get remote.origin.url
   args:
     chdir: "{{ release_git_dir }}"
@@ -9,7 +9,7 @@
   register: __release_git_url
 
 - name: git > Get informations
-  git:
+  ansible.builtin.git:
     repo: "{{ __release_git_url.stdout }}"
     dest: "{{ release_git_dir }}"
     clone: false
@@ -17,7 +17,7 @@
   register: __release_git
 
 - name: Release directory "{{ release_dir }}"
-  shell: >
+  ansible.builtin.shell: >
     rm --recursive --force {{ release_dir }}
     && mkdir -p {{ release_dir }}
   args:
@@ -25,7 +25,7 @@
   tags: log_failed
 
 - name: git > Export repository
-  shell: >
+  ansible.builtin.shell: >
     git archive HEAD{{
       ' ' ~ release_target_dir if (release_target_dir) else ''
     }}
@@ -40,21 +40,21 @@
   tags: log_failed
 
 - name: tasks
-  include_tasks: task/{{ item.task }}.yml
+  ansible.builtin.include_tasks: task/{{ item.task }}.yml
   loop: "{{ query('release_tasks', release_tasks) }}"
   when: item.when
 
-- name: git > Init "{{ release_repo }}" on branch "{{ release_version }}"
-  shell: >
+- name: git > Init "{{ release_repo }}" on branch "{{ release_ref }}"
+  ansible.builtin.shell: >
     git init
-    && git checkout -b {{ release_version }}
+    && git checkout -b {{ release_ref }}
     && git remote add origin {{ release_repo }}
     && git fetch
     && (
-      git show-ref -q origin/{{ release_version }} ; rc=$? ;
+      git show-ref -q origin/{{ release_ref }} ; rc=$? ;
       if [ $rc -eq 0 -o $rc -eq 1 ] ; then
         if [ $rc -eq 0 ] ; then
-          git update-ref HEAD origin/{{ release_version }} ;
+          git update-ref HEAD origin/{{ release_ref }} ;
         fi ;
       else
         return $rc ;
@@ -65,15 +65,15 @@
   tags: log_failed
 
 - name: Remove
-  shell: >
+  ansible.builtin.shell: >
     rm --recursive --force {{ [release_dir, item]|join('/') }}
   args:
     warn: false
   tags: log_failed
-  loop: "{{ release_removed }}"
+  loop: "{{ release_remove }}"
 
 - name: git > Add all
-  shell: >
+  ansible.builtin.shell: >
     git add --force --all
   args:
     chdir: "{{ release_dir }}"
@@ -81,7 +81,7 @@
   tags: log_failed
 
 - name: git > Add
-  shell: >
+  ansible.builtin.shell: >
     git add --force {{ item }}
   args:
     chdir: "{{ release_dir }}"
@@ -89,8 +89,10 @@
   tags: log_failed
 
 - name: git > Commit
-  shell: |
-    git commit --allow-empty -m "{{
+  ansible.builtin.shell: |
+    git {{
+      release_author|ternary(release_author|regex_replace(release_email_regex, '-c user.name="\g<name>" -c user.email="\g<email>"'), '')
+    }} commit --allow-empty --message "{{
       ansible_date_time.year
       ~ ansible_date_time.month
       ~ ansible_date_time.day
@@ -105,9 +107,9 @@
     chdir: "{{ release_dir }}"
   tags: log_failed
 
-- name: git > Push "{{ release_version }}"
-  shell: >
-    git push --set-upstream origin {{ release_version }}
+- name: git > Push "{{ release_ref }}"
+  ansible.builtin.shell: >
+    git push --set-upstream origin {{ release_ref }}
     && git push origin HEAD
   args:
     chdir: "{{ release_dir }}"

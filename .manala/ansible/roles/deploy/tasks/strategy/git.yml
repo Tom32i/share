@@ -4,15 +4,16 @@
   block:
 
     - name: strategy/git > Repository
-      git:
+      ansible.builtin.git:
         repo:           "{{ deploy_strategy_git_repo }}"
         dest:           "{{ deploy_dir ~ '/repo' }}"
         version:        "{{ deploy_strategy_git_ref }}"
         accept_hostkey: true
         update:         true
+        force:          true
 
     - name: strategy/git > Get head
-      shell: >
+      ansible.builtin.shell: >
         git rev-parse --short HEAD
       args:
         chdir: "{{ deploy_dir ~ '/repo' }}"
@@ -20,11 +21,11 @@
       register: __deploy_strategy_git_head_result
 
     - name: strategy/git > Set head
-      set_fact:
+      ansible.builtin.set_fact:
         deploy_strategy_git_head: "{{ __deploy_strategy_git_head_result.stdout }}"
 
     - name: strategy/git > Export repository
-      shell: >
+      ansible.builtin.shell: >
         git checkout-index -f -a --prefix="{{ deploy_helper.new_release_path }}/"
       args:
         chdir: "{{ deploy_dir ~ '/repo' }}"

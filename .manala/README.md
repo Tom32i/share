@@ -1,15 +1,18 @@
 ---
-title: Elao - App
+title: Elao - App - Docker
 tableOfContent: 3
 ---
 
 ## Requirements
 
 * Make
-* Vagrant 2.2.10+
-* Landrush 1.3.2+
-* VirtualBox 6.1.12+
-* Docker Desktop 2.2.0+
+
+MacOS
+
+* Docker Desktop 4.3.2+
+`brew install docker`
+* Mutagen Compose 0.13.0+
+`brew install mutagen-io/mutagen/mutagen-compose`
 
 ## Overview
 
@@ -17,9 +20,9 @@ This recipe contains some helpful scripts in the context of a php/nodejs app, su
 
 ## Init
 
-```
-$ cd [workspace]
-$ manala init -i elao.app [project]
+```shell
+cd [workspace]
+manala init -i elao.app.docker [project]
 ```
 
 ## Quick start
@@ -29,7 +32,7 @@ In a shell terminal, change directory to your app, and run the following command
 ```shell
 cd /path/to/my/app
 manala init
-Select the "elao.app" recipe
+Select the "elao.app.docker" recipe
 ```
 
 Edit the `Makefile` at the root directory of your project and add the following lines at the beginning of the file:
@@ -40,14 +43,14 @@ Edit the `Makefile` at the root directory of your project and add the following 
 -include .manala/Makefile
 ```
 
-Then update the `.manala.yaml` file (see [the releases example](#releases) below) and then run the `manala up` command:
+Then update the `.manala.yaml` file (see [the deliveries example](#deliveries) below) and then run the `manala up` command:
 
 ```shell
 manala up
 ```
 
 !!! Warning
-    Don't forget to run the `manala up` command each time you update the 
+    Don't forget to run the `manala up` command each time you update the
     `.manala.yaml` file to actually apply your changes !!!
 
 From now on, if you execute the `make help` command in your console, you should obtain the following output:
@@ -64,52 +67,59 @@ Docker:
 App:
 ```
 
-## VM interaction
+## Environment interaction
 
 In your app directory.
 
 Initialise your app:
-```bash
+```shell
 make setup
 ```
 
-Start VM:
-```bash
+Start environment:
+```shell
 make up
 ```
 
-Stop VM:
-```bash
+Stop environment:
+```shell
 make halt
 ```
 
-VM shell:
-```bash
-make ssh
+Environment shell:
+```shell
+make sh
 ```
 
-Box update:
-```bash
-cd .manala && vagrant box update && cd -
+Custom docker compose command:
+```shell
+make docker [COMMAND]
 ```
 
-## System
+:warning: separate hyphen based arguments or flags with `--` to avoid shell miss-interpretation:
+```shell
+make docker logs -- --follow
+```
 
-Here is an example of a system configuration in `.manala.yaml`:
+## Configuration
+
+Here is an example of a configuration in `.manala.yaml`:
 
 ```yaml
+###########
+# Project #
+###########
+
+project:
+    name: app
+    ports_prefix: 123 # >= 2000, <= 64000
+
 ##########
 # System #
 ##########
 
 system:
-    version: 10
-    hostname: app.vm
-    #memory: 4096 # Optional
-    #cpus: 2 # Optional
-    #motd: # Optional
-    #    template: motd/cow.j2
-    #    message: Foo bar
+    version: 11
     #timezone: Etc/UTC # Optional
     #locales: # Optional
     #    default: C.UTF-8
@@ -121,7 +131,7 @@ system:
         #preferences: [] # Optional
         packages:
           - pdftk
-          - https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb
+          - https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_{{ apt_architecture }}.deb
     files:
       - path: /srv/app/var/log
         src: /srv/log
@@ -167,7 +177,7 @@ system:
         #               }
         #           }
     php:
-        version: "8.0"
+        version: 8.1
         # composer:
         #   version: 1 # Optional
         extensions:
@@ -228,7 +238,7 @@ system:
     #             command=/bin/foo
     # MariaDB
     mariadb:
-        version: 10.5
+        version: 10.6
     # ...*OR* MySQL...
     mysql:
         version: "8.0"
@@ -262,8 +272,24 @@ system:
                 Host *.elao.run
                     User app
                     ForwardAgent yes
+    docker:
+        services:
+            whoami:
+                image: traefik/whoami:v1.7.1
+                network_mode: service:app
+                profiles:
+                    - development
+            # App ports
+            app:
+                ports:
+                    # whoami
+                    - 12345:80
 ```
 
+Details:
+
+- `project`
+  - `ports_prefix`: docker network behavior force `localhost` usage for all projects. In order to runs multiple projects simultaneously, a kind of range ports must be set to avoid conflicts. Choose a prefix value, greater or equal to 20, and lower or equal to 640, like 123. All project ports will be based on this value, like 12380 for http or 12343 for https accesses.
 
 ## Integration
 
@@ -277,32 +303,34 @@ Here are some examples of integration configurations in `.manala.yaml` for Jenki
 ###############
 
 integration:
-    tasks:
-      - shell: make install@integration
-      - label: Integration
-        junit: report/junit/*.xml
-        parallel: true
-        warn: true
-        tasks:
-          - label: Lint
+    jenkins:
+        pipeline:
             tasks:
-              - shell: make lint.php-cs-fixer@integration
-              - shell: make lint.twig@integration
-              - shell: make lint.yaml@integration
-              - shell: make lint.eslint@integration
-          - label: Security
-            tasks:
-              - shell: make security.symfony@integration
-              - shell: make security.yarn@integration
-          - label: Test
-            tasks:
-              - shell: make test.phpunit@integration
-                artifacts: var/log/*.log
-                # artifacts:
-                #   - var/log/foo.log
-                #   - var/log/bar.log
-                # env:
-                #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
+              - shell: make install@integration
+              - label: Integration
+                junit: report/junit/*.xml
+                parallel: true
+                warn: true
+                tasks:
+                  - label: Lint
+                    tasks:
+                      - shell: make lint.php-cs-fixer@integration
+                      - shell: make lint.twig@integration
+                      - shell: make lint.yaml@integration
+                      - shell: make lint.eslint@integration
+                  - label: Security
+                    tasks:
+                      - shell: make security.symfony@integration
+                      - shell: make security.yarn@integration
+                  - label: Test
+                    tasks:
+                      - shell: make test.phpunit@integration
+                        artifacts: var/log/*.log
+                        # artifacts:
+                        #   - var/log/foo.log
+                        #   - var/log/bar.log
+                        # env:
+                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
 ```
 
 In this example we have two parallel stages: `api` and `mobile`, corresponding to two different sub-apps.
@@ -313,38 +341,40 @@ In this example we have two parallel stages: `api` and `mobile`, corresponding t
 ###############
 
 integration:
-    tasks:
-      - label: Integration # Optional
-        parallel: true # ! Careful ! Could *NOT* be nested !
-        junit: report/junit/*.xml
-        artifacts: var/log/*.log
-        warn: true # Turn errors into warnings (recursively applied)
-        tasks:
-          - app: api # Optional
+    jenkins:
+        pipeline:
             tasks:
-              - shell: make install@integration
-              - shell: make build@integration
-              - shell: make lint.php-cs-fixer@integration
-              - shell: make security.symfony@integration
-              - shell: make test.phpunit@integration
+              - label: Integration # Optional
+                parallel: true # ! Careful ! Could *NOT* be nested !
+                junit: report/junit/*.xml
                 artifacts: var/log/*.log
-                # env:
-                #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
-          - app: mobile
-            tasks:
-              - shell: make install@integration
-              - shell: make build@integration
-              - shell: make lint.eslint@integration
-              - shell: make test.jest@integration
+                warn: true # Turn errors into warnings (recursively applied)
+                tasks:
+                  - app: api # Optional
+                    tasks:
+                      - shell: make install@integration
+                      - shell: make build@integration
+                      - shell: make lint.php-cs-fixer@integration
+                      - shell: make security.symfony@integration
+                      - shell: make test.phpunit@integration
+                        artifacts: var/log/*.log
+                        # env:
+                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
+                  - app: mobile
+                    tasks:
+                      - shell: make install@integration
+                      - shell: make build@integration
+                      - shell: make lint.eslint@integration
+                      - shell: make test.jest@integration
 ```
 
 ### Github Actions
 
-The recipes generates a `Dockerfile` and a `docker-compose.yaml` file that can 
+The recipes generates a `Dockerfile` and a `docker-compose.yaml` file that can
 be used to provide a fully-fledged environnement according to your project needs.
 
-The [Elao/manala-ci-action](https://github.com/Elao/manala-ci-action) rely on 
-this to allow you running any CLI command in this environnement, 
+The [Elao/manala-ci-action](https://github.com/Elao/manala-ci-action) rely on
+this to allow you running any CLI command in this environnement,
 using Github Action workflows.
 
 ### Common integration tasks
@@ -368,9 +398,9 @@ install@integration:
 	# Yarn
 	yarn install --color=always --no-progress
 
-###########
+#########
 # Build #
-###########
+#########
 
 ...
 
@@ -448,23 +478,24 @@ test.jest@integration:
 
 ```
 
-## Releases
+## Deliveries
 
-Here is an example of a production/staging release configuration in `.manala.yaml`:
+Here is an example of a production/staging deliveries configuration in `.manala.yaml`:
 
 ```yaml
-############
-# Releases #
-############
+##############
+# Deliveries #
+##############
 
-releases:
+deliveries:
 
-  - &release
+  - &delivery
     #app: api # Optional
-    mode: production
-    repo: git@git.elao.com:<vendor>/<app>-release.git
-    #ref: master # Based on app/mode by default
+    tier: production
+    #ref: staging # Default to master
     # Release
+    release_repo: git@git.example.com:<vendor>/<app>-release.git
+    #release_ref: master # Based on app/tier by default
     release_tasks:
       - shell: make install@production
       - shell: make build@production
@@ -482,7 +513,7 @@ releases:
       - Makefile
 
     # Or you can include all by default and only list the paths you want to exclude
-    # release_removed:
+    # release_remove:
     #   - ansible
     #   - build
     #   - doc
@@ -494,7 +525,6 @@ releases:
     #   - package.json
     #   - phpunit.xml.dist
     #   - README.md
-    #   - Vagrantfile
     #   - webpack.config.js
     #   - yarn.lock
 
@@ -512,14 +542,14 @@ releases:
       - shell: make warmup@production
       #- shell: make migration@production
       #  when: master | default # Conditions on custom host variables (jinja2 format)
-    #deploy_removed:
+    #deploy_remove:
     #  - web/app_dev.php
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.0-fpm
+      - shell: sudo /bin/systemctl reload php8.1-fpm
       #- shell: sudo /bin/systemctl restart supervisor
 
-  - << : *release
-    mode: staging
+  - << : *delivery
+    tier: staging
     release_tasks:
       - shell: make install@staging
       - shell: make build@staging
@@ -684,13 +714,13 @@ parameters:
 
 !!! Note
     Note that the path to the secret will slightly differ from what the Vault server will display:    
-    if the path is `MyApp/production/env` on the Vault server, 
+    if the path is `MyApp/production/env` on the Vault server,
     it will become `MyApp/data/production/env` in the template
 
 See [Go Template syntax](https://docs.gomplate.ca/syntax/) for more info.
 
 !!! Warning
-    Make sure to include the `secrets` directory into your release, using the `release_add` entry.
+    Make sure to include the `secrets` directory into your deliveries, using the `release_add` entry.
 
 ## Https
 
@@ -701,8 +731,8 @@ In  order for https to work properly, you must:
     ```shell
     $ sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" .manala/certificates/ca.crt
     ```
-   
-2. generate a project certificate (one time *by* project, inside vagrant, remember to commit them right after)
+
+2. generate a project certificate (one time *by* project, remember to commit them right after)
 
     ```shell
     ⇒  make provision.certificates
@@ -710,11 +740,9 @@ In  order for https to work properly, you must:
 
 3. For firefox only, browse to `about:config` and ensure `security.enterprise_roots.enabled` value is set to true
 
-## Tips, Tricks, and Tweaks
+## Caveats
 
-* [Vagrant root privilege requirement](https://www.vagrantup.com/docs/synced-folders/nfs.html#root-privilege-requirement)
-* Debug ansible provisioning:
-
-  ```shell
-  ansible-galaxy collection install manala.roles --collections-path /vagrant/ansible/collections
-  ```
+- MySQL 5.7 docker images are not available on arm64, that's why amd64 architecture is forced. Expect rare speed and stability issues.
+- Nginx official debian packages for stretch are not available on arm64, that's why debian packages are used in version `1.10`. Expect rare configuration issues.
+- OpenSSL debian packages for buster are broken on arm64, that's why bullseye ones are used. Expect rare behavior issues.
+- Firefox is blocking some ports like `10080`. Try to avoid them.

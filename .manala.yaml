@@ -4,15 +4,22 @@
 ####################################################################
 
 manala:
-    recipe: elao.app
+    recipe: elao.app.docker
+
+###########
+# Project #
+###########
+
+project:
+    name: share
+    ports_prefix: 22
 
 ##########
 # System #
 ##########
 
 system:
-    version: 10
-    hostname: share.vm
+    version: 11
     php:
         version: "8.0"
         extensions:
@@ -72,15 +79,15 @@ system:
                     User tom32i
                     ForwardAgent yes
 
-############
-# Releases #
-############
+##############
+# Deliveries #
+##############
 
-releases:
-  - &release
+deliveries:
+  - &delivery
     #app: api
-    mode: production
-    repo: git@tom32i.fr:release/share.git
+    tier: production
+    release_repo: git@tom32i.fr:release/share.git
     # Release
     release_tasks:
       - shell: make install@production
@@ -113,8 +120,8 @@ releases:
     deploy_post_tasks:
       - shell: sudo /bin/systemctl reload php8.0-fpm
 
-  - <<: *release
-    mode: staging
+  - <<: *delivery
+    tier: staging
     # Release
     release_tasks:
       - shell: make install@staging

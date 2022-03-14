@@ -23,14 +23,14 @@ prompt_setup_theme(){
 }
 
 prompt_theme_precmd(){
-  setopt localoptions extendedglob
+  setopt localoptions nopromptsubst extendedglob
 
   local gitinfo=$(git_prompt_info)
   local gitinfo_nocolor=${gitinfo//\%\{[^\}]##\}}
-  local exp_nocolor="$(print -P \"$base_prompt_nocolor$gitinfo_nocolor$post_prompt_nocolor\")"
+  local exp_nocolor="$(print -P \"${base_prompt_nocolor}${gitinfo_nocolor}${post_prompt_nocolor}\")"
   local prompt_length={% raw %}${#exp_nocolor}{% endraw %}
 
-  PROMPT="%{$bg[green]%}%{$fg[black]%}❱Dev❰%{$reset_color%} ${base_prompt}${gitinfo}${post_prompt}"
+  PROMPT="%{$bg[green]%}%{$fg[black]%}❱Dev❰%{$reset_color%} ${base_prompt}\$(git_prompt_info)${post_prompt}"
 }
 
 prompt_setup_theme

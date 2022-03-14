@@ -5,12 +5,11 @@ release:
             hosts:
                 localhost@production:
                     ansible_connection: local
-                    ansible_python_interpreter: /usr/bin/python3
             vars:
                 release_dir: /srv/release/production
                 release_git_dir: /srv/app
                 release_repo: git@tom32i.fr:release/share.git
-                release_version: production
+                release_ref: production
                 release_tasks:
                   - shell: make install@production
                   - shell: composer dump-env --empty prod
@@ -31,12 +30,11 @@ release:
             hosts:
                 localhost@staging:
                     ansible_connection: local
-                    ansible_python_interpreter: /usr/bin/python3
             vars:
                 release_dir: /srv/release/staging
                 release_git_dir: /srv/app
                 release_repo: git@tom32i.fr:release/share.git
-                release_version: staging
+                release_ref: staging
                 release_tasks:
                   - shell: make install@staging
                   - shell: composer dump-env --empty prod

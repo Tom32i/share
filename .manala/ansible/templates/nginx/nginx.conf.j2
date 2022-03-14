@@ -25,7 +25,7 @@ http {
 
     access_log /var/log/nginx/access.log;
 
-    # See: http://jeremyfelt.com/code/2013/01/08/clear-nginx-cache-in-vagrant/
+    # See: https://serverfault.com/questions/269420/disable-caching-when-serving-static-files-with-nginx-for-development
     sendfile off;
     #tcp_nopush     on;
 
@@ -41,22 +41,22 @@ http {
 
     include mime.types;
     include /etc/nginx/conf.d/*.conf;
-{{ config.http | manala.roles.nginx_config_section(exclude=[
-  'server_tokens',
-  'default_type',
-  'log_format',
-  'access_log',
-  'sendfile',
-  'tcp_nopush',
-  'keepalive_timeout',
-  'fastcgi_buffer_size',
-  'fastcgi_buffers',
-  'fastcgi_busy_buffers_size',
-  'server_names_hash_bucket_size',
-  'include',
-]) | indent(4) }}
+    {{- ('\n' ~ config.http | manala.roles.nginx_config(exclude=[
+      'server_tokens',
+      'default_type',
+      'log_format',
+      'access_log',
+      'sendfile',
+      'tcp_nopush',
+      'keepalive_timeout',
+      'fastcgi_buffer_size',
+      'fastcgi_buffers',
+      'fastcgi_busy_buffers_size',
+      'server_names_hash_bucket_size',
+      'include',
+    ])).rstrip() | indent(4) }}
 }
-{{ config | manala.roles.nginx_config_section(exclude=[
+{{ config | manala.roles.nginx_config(exclude=[
   'user',
   'worker_processes',
   'error_log',

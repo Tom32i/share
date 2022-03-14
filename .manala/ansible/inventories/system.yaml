@@ -4,18 +4,20 @@ system:
 
         # Ansible
         ansible_connection: local
-        ansible_python_interpreter: /usr/bin/python3
 
-        # Accounts
-        system_accounts: false
+        # Variables
+        apt_architecture: "{{ ansible_architecture | manala.roles.apt_architecture }}"
+
         # Alternatives
         system_alternatives: false
         # App
-        system_app: false
+        system_app_group: app
+        system_app_user: app
         system_app_dir: /srv/app
         system_app_log_dir: /srv/log
         system_app_cache_dir: /srv/cache
         system_app_sessions_dir: /srv/sessions
+        system_app_release_dir: /srv/release
         # Apt
         system_apt: false
         system_apt_repositories: []
@@ -23,13 +25,10 @@ system:
         system_apt_holds: []
         # Certificates
         system_certificates: false
-        system_certificates_name: share.vm
+        system_certificates_name: share.ela.ooo
         # Cron
         system_cron: false
         system_cron_files: []
-        # Docker
-        system_docker: false
-        system_docker_containers: []
         # Elasticsearch
         system_elasticsearch: false
         system_elasticsearch_version: null
@@ -56,31 +55,19 @@ system:
         system_influxdb_databases: []
         system_influxdb_users: []
         system_influxdb_privileges: []
-        # Java
-        system_java: "{{ system_elasticsearch }}"
         # Locales
         system_locales: false
-        system_locales_default: C.UTF-8
         system_locales_codes: []
         # MariaDB
         system_mariadb: false
         system_mariadb_version: null
         system_mariadb_install_packages:
-            - mariadb-server
             - mariadb-client
-        system_mariadb_configs_dir: /etc/mysql/conf.d
-        # Motd
-        system_motd: false
-        system_motd_template: motd/elao.j2
-        system_motd_message:
-            - A curl vaillant, rien d'impossible !
-            - --force et owner !
-            - Il n'y pas de question cron, juste des réponses mal timé ! — Cronfucius
         # MySQL
         system_mysql: false
         system_mysql_version: null
-        system_mysql_install_packages: null
-        system_mysql_configs_dir: /etc/mysql/mysql.conf.d
+        system_mysql_install_packages:
+            - default-mysql-client
         # Network
         system_network: false
         # Nginx
@@ -122,7 +109,7 @@ system:
         system_ohmyzsh: false
         # Php
         system_php: false
-        system_php_version: 8.0
+        system_php_version: "8.0"
         system_php_composer: "{{ system_php }}"
         system_php_composer_version: null
         system_php_sapis:
@@ -144,7 +131,6 @@ system:
         system_redis_server_config: {}
         # Ssh
         system_ssh: false
-        system_ssh_server: false
         system_ssh_client_config: |
             Host tom32i.fr
                 User tom32i
@@ -164,121 +150,3 @@ system:
         system_vim: false
         # Zsh
         system_zsh: false
-
-    hosts:
-
-        ###############
-        # Development #
-        ###############
-
-        development:
-
-            # Accounts
-            system_accounts: true
-            # Alternatives
-            system_alternatives: true
-            # App
-            system_app: true
-            system_app_group: vagrant
-            system_app_user: vagrant
-            # Apt
-            system_apt: true
-            system_apt_packages:
-                - xz-utils
-                - rsync
-                - wget
-                - curl
-                - make
-                - less
-                - ssl-cert
-                - htop
-                - pv # for real-time progress on streams (e.g mysql import)
-            # Certificates
-            system_certificates: true
-            # Cron
-            system_cron: false
-            # Docker
-            system_docker: true
-            # Elasticsearch
-            system_elasticsearch: false
-            # Environment
-            system_environment: true
-            # Files
-            system_files: true
-            # Git
-            system_git: true
-            # Gomplate
-            system_gomplate: true
-            # InfluxDB
-            system_influxdb: false
-            # Locales
-            system_locales: true
-            # MariaDB
-            system_mariadb: false
-            # Motd
-            system_motd: true
-            # MySQL
-            system_mysql: false
-            # Network
-            system_network: false
-            system_network_hosts: {}
-            # Nginx
-            system_nginx: true
-            # Ngrok
-            system_ngrok: true
-            # NodeJS
-            system_nodejs: true
-            # Oh my zsh
-            system_ohmyzsh: true
-            # Php
-            system_php: true
-            # Redis
-            system_redis: false
-            # Ssh
-            system_ssh: true
-            system_ssh_server: true
-            system_ssh_client_config_template: ssh/development/ssh_config.j2
-            # Supervisor
-            system_supervisor: false
-            # Timezone
-            system_timezone: true
-            # Vim
-            system_vim: true
-            # Zsh
-            system_zsh: true
-
-        ###############
-        # Integration #
-        ###############
-
-        integration:
-
-            # App
-            system_app: true
-            system_app_group: docker
-            system_app_user: docker
-            # Apt
-            system_apt: true
-            system_apt_packages:
-                - xz-utils
-                - rsync
-                - wget
-                - curl
-                - make
-                - less
-                - ssl-cert
-                - procps
-                - vim-tiny
-            # Git
-            system_git: true
-            # Locales
-            system_locales: true
-            # NodeJS
-            system_nodejs: true
-            # Php
-            system_php: true
-            system_php_sapis:
-              - cli
-            # Ssh
-            system_ssh: true
-            system_ssh_client_config_template: ssh/integration/ssh_config.j2
