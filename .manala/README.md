@@ -43,7 +43,7 @@ Edit the `Makefile` at the root directory of your project and add the following 
 -include .manala/Makefile
 ```
 
-Then update the `.manala.yaml` file (see [the releases example](#releases) below) and then run the `manala up` command:
+Then update the `.manala.yaml` file (see [the deliveries example](#deliveries) below) and then run the `manala up` command:
 
 ```shell
 manala up
@@ -303,32 +303,34 @@ Here are some examples of integration configurations in `.manala.yaml` for Jenki
 ###############
 
 integration:
-    tasks:
-      - shell: make install@integration
-      - label: Integration
-        junit: report/junit/*.xml
-        parallel: true
-        warn: true
-        tasks:
-          - label: Lint
+    jenkins:
+        pipeline:
             tasks:
-              - shell: make lint.php-cs-fixer@integration
-              - shell: make lint.twig@integration
-              - shell: make lint.yaml@integration
-              - shell: make lint.eslint@integration
-          - label: Security
-            tasks:
-              - shell: make security.symfony@integration
-              - shell: make security.yarn@integration
-          - label: Test
-            tasks:
-              - shell: make test.phpunit@integration
-                artifacts: var/log/*.log
-                # artifacts:
-                #   - var/log/foo.log
-                #   - var/log/bar.log
-                # env:
-                #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
+              - shell: make install@integration
+              - label: Integration
+                junit: report/junit/*.xml
+                parallel: true
+                warn: true
+                tasks:
+                  - label: Lint
+                    tasks:
+                      - shell: make lint.php-cs-fixer@integration
+                      - shell: make lint.twig@integration
+                      - shell: make lint.yaml@integration
+                      - shell: make lint.eslint@integration
+                  - label: Security
+                    tasks:
+                      - shell: make security.symfony@integration
+                      - shell: make security.yarn@integration
+                  - label: Test
+                    tasks:
+                      - shell: make test.phpunit@integration
+                        artifacts: var/log/*.log
+                        # artifacts:
+                        #   - var/log/foo.log
+                        #   - var/log/bar.log
+                        # env:
+                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
 ```
 
 In this example we have two parallel stages: `api` and `mobile`, corresponding to two different sub-apps.
@@ -339,29 +341,31 @@ In this example we have two parallel stages: `api` and `mobile`, corresponding t
 ###############
 
 integration:
-    tasks:
-      - label: Integration # Optional
-        parallel: true # ! Careful ! Could *NOT* be nested !
-        junit: report/junit/*.xml
-        artifacts: var/log/*.log
-        warn: true # Turn errors into warnings (recursively applied)
-        tasks:
-          - app: api # Optional
+    jenkins:
+        pipeline:
             tasks:
-              - shell: make install@integration
-              - shell: make build@integration
-              - shell: make lint.php-cs-fixer@integration
-              - shell: make security.symfony@integration
-              - shell: make test.phpunit@integration
+              - label: Integration # Optional
+                parallel: true # ! Careful ! Could *NOT* be nested !
+                junit: report/junit/*.xml
                 artifacts: var/log/*.log
-                # env:
-                #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
-          - app: mobile
-            tasks:
-              - shell: make install@integration
-              - shell: make build@integration
-              - shell: make lint.eslint@integration
-              - shell: make test.jest@integration
+                warn: true # Turn errors into warnings (recursively applied)
+                tasks:
+                  - app: api # Optional
+                    tasks:
+                      - shell: make install@integration
+                      - shell: make build@integration
+                      - shell: make lint.php-cs-fixer@integration
+                      - shell: make security.symfony@integration
+                      - shell: make test.phpunit@integration
+                        artifacts: var/log/*.log
+                        # env:
+                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
+                  - app: mobile
+                    tasks:
+                      - shell: make install@integration
+                      - shell: make build@integration
+                      - shell: make lint.eslint@integration
+                      - shell: make test.jest@integration
 ```
 
 ### Github Actions
@@ -474,23 +478,24 @@ test.jest@integration:
 
 ```
 
-## Releases
+## Deliveries
 
-Here is an example of a production/staging release configuration in `.manala.yaml`:
+Here is an example of a production/staging deliveries configuration in `.manala.yaml`:
 
 ```yaml
-############
-# Releases #
-############
+##############
+# Deliveries #
+##############
 
-releases:
+deliveries:
 
-  - &release
+  - &delivery
     #app: api # Optional
-    mode: production
-    repo: git@git.elao.com:<vendor>/<app>-release.git
-    #ref: master # Based on app/mode by default
+    tier: production
+    #ref: staging # Default to master
     # Release
+    release_repo: git@git.example.com:<vendor>/<app>-release.git
+    #release_ref: master # Based on app/tier by default
     release_tasks:
       - shell: make install@production
       - shell: make build@production
@@ -508,7 +513,7 @@ releases:
       - Makefile
 
     # Or you can include all by default and only list the paths you want to exclude
-    # release_removed:
+    # release_remove:
     #   - ansible
     #   - build
     #   - doc
@@ -537,14 +542,14 @@ releases:
       - shell: make warmup@production
       #- shell: make migration@production
       #  when: master | default # Conditions on custom host variables (jinja2 format)
-    #deploy_removed:
+    #deploy_remove:
     #  - web/app_dev.php
     deploy_post_tasks:
       - shell: sudo /bin/systemctl reload php8.1-fpm
       #- shell: sudo /bin/systemctl restart supervisor
 
-  - << : *release
-    mode: staging
+  - << : *delivery
+    tier: staging
     release_tasks:
       - shell: make install@staging
       - shell: make build@staging
@@ -715,7 +720,7 @@ parameters:
 See [Go Template syntax](https://docs.gomplate.ca/syntax/) for more info.
 
 !!! Warning
-    Make sure to include the `secrets` directory into your release, using the `release_add` entry.
+    Make sure to include the `secrets` directory into your deliveries, using the `release_add` entry.
 
 ## Https
 

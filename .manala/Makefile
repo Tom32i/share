@@ -114,16 +114,17 @@ provision.certificates: _ANSIBLE_PLAYBOOK_TAGS = certificates
 provision.certificates: _ANSIBLE_PLAYBOOK_EXTRA_VARS = certificates_prompt=true
 provision.certificates: provision
 
-############
-# Releases #
-############
+##############
+# Deliveries #
+##############
 
-HELP += $(call help_section, Releases)
+HELP += $(call help_section, Deliveries)
 
-HELP += $(call help,release@production,Release in production)
+HELP += $(call help,release@production,Release in production (AUTHOR))
 release@production: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
 release@production: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/release.yaml
 release@production: _ANSIBLE_PLAYBOOK_LIMIT = production
+release@production: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
 release@production:
 	$(call log, Run ansible playbook)
 	$(_ansible_playbook) \
@@ -139,10 +140,11 @@ deploy@production:
 	$(_ansible_playbook) \
 		$(_DIR)/.manala/ansible/deploy.yaml
 
-HELP += $(call help,release@staging,Release in staging)
+HELP += $(call help,release@staging,Release in staging (AUTHOR))
 release@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
 release@staging: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/release.yaml
 release@staging: _ANSIBLE_PLAYBOOK_LIMIT = staging
+release@staging: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
 release@staging:
 	$(call log, Run ansible playbook)
 	$(_ansible_playbook) \
