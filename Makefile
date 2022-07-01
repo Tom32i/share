@@ -64,7 +64,7 @@ build@production: build
 ##########
 
 warmup:
-	bin/console doctrine:database:create --if-not-exists
+	#bin/console doctrine:database:create --if-not-exists
 	# Doctrine migrations
 	#bin/console doctrine:migration:migrate --no-interaction
 	# Doctrine fixtures
@@ -85,7 +85,6 @@ warmup@production:
 	bin/console cache:warmup --ansi --no-debug
 	# Doctrine migrations
 	#bin/console doctrine:migrations:migrate --no-debug --no-interaction  --allow-no-migration
-
 
 
 ############
@@ -145,7 +144,6 @@ download@staging:
 ## Download photos (production)
 download@production:
 	rsync -arzv --progress tom32i@tom32i.fr:/home/tom32i/share/shared/var/share/* var/share
-
 
 ##########
 # Custom #

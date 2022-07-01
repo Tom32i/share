@@ -21,7 +21,7 @@ project:
 system:
     version: 11
     php:
-        version: "8.0"
+        version: 8.1
         extensions:
           # Symfony
           - intl
@@ -113,14 +113,15 @@ deliveries:
     deploy_dir: /home/tom32i/share
     deploy_shared_dirs:
       - var/log
-      - var/sessions
       - var/share
+      - var/cache/share
     deploy_shared_files:
       - .env.local.php
     deploy_tasks:
       - shell: make warmup@production
     deploy_post_tasks:
       - shell: sudo /bin/systemctl reload php8.0-fpm
+    deploy_url: https://share.tom32i.fr
 
   - <<: *delivery
     tier: staging
@@ -134,3 +135,4 @@ deliveries:
       - ssh_host: deployer.vm
     deploy_tasks:
       - shell: make warmup@staging
+    deploy_url: https://share.deployer.vm

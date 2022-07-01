@@ -68,6 +68,7 @@ runs:
         ref: ${{ inputs.ref || 'master' }}
         description: Deploy production
         token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        target_url: https://share.tom32i.fr
         environment: production
 
     - name: Deploy production
@@ -90,6 +91,8 @@ runs:
       with:
         token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
         description: Deployed production
+        target_url: https://share.tom32i.fr
+        environment_url: https://share.tom32i.fr
         state: success
         deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
 
@@ -154,6 +157,7 @@ runs:
         ref: ${{ inputs.ref || 'master' }}
         description: Deploy staging
         token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        target_url: https://share.deployer.vm
         environment: staging
 
     - name: Deploy staging
@@ -176,6 +180,8 @@ runs:
       with:
         token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
         description: Deployed staging
+        target_url: https://share.deployer.vm
+        environment_url: https://share.deployer.vm
         state: success
         deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
 

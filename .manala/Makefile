@@ -137,6 +137,7 @@ deploy@production:
 	$(call log, Run ansible playbook)
 	$(_ansible_playbook) \
 		$(_DIR)/.manala/ansible/deploy.yaml
+	$(call message_success, Visit https://share.tom32i.fr)
 
 HELP += $(call help,release@staging,Release in staging (AUTHOR))
 release@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
@@ -157,6 +158,7 @@ deploy@staging:
 	$(call log, Run ansible playbook)
 	$(_ansible_playbook) \
 		$(_DIR)/.manala/ansible/deploy.yaml
+	$(call message_success, Visit https://share.deployer.vm)
 
 ########
 # Help #
