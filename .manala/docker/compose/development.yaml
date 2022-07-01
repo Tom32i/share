@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
 
     ###########
@@ -21,13 +19,8 @@ services:
     app:
         build:
             args:
-                MANALA_INIT: sysv
                 MANALA_PROVISION: ansible
                 MANALA_PROVISION_LIMIT: development
-        tty: true
-        tmpfs:
-           - /tmp
-           - /run
         ports:
             # Usuals
             - 2288:8080

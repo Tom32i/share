@@ -28,6 +28,8 @@ system:
           - curl
           - mbstring
           - xml
+          # App
+          - gd
         configs:
             - template: php/opcache.ini.j2
             - template: php/app.ini.j2

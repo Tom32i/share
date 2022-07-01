@@ -1,4 +1,4 @@
-version: "3.8"
+name: app
 
 services:
 
@@ -9,7 +9,5 @@ services:
     app:
         build:
             args:
-                MANALA_INIT: none
                 MANALA_PROVISION: ansible
                 MANALA_PROVISION_LIMIT: integration
-        user: app

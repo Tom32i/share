@@ -9,10 +9,8 @@ _CURRENT_DIR = $(patsubst ./%,%,.$(patsubst $(realpath $(CURDIR)/$(_DIR))%,%,$(C
 # Project #
 ###########
 
-PROJECT_NAME = share
-
 define project_host
-$(PROJECT_NAME).ela.ooo$(if $(1),:22$(shell printf "%02d" $(1)))
+share.ela.ooo$(if $(1),:22$(shell printf "%02d" $(1)))
 endef
 
 -include $(_DIR)/.manala/make/text.mk

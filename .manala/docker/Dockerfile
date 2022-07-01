@@ -11,13 +11,15 @@ FROM debian:11-slim AS system
 
 LABEL maintainer="Elao <contact@elao.com>"
 
-ARG MANALA_HOST=linux
+ARG MANALA_HOST_OS=linux
+ARG MANALA_HOST_PATH
 ARG MANALA_USER_ID=1000
 ARG MANALA_GROUP_ID=1000
 
 # Used for checking we're running inside a container
 ENV container="docker"
-ENV MANALA_HOST=${MANALA_HOST}
+ENV MANALA_HOST_OS=${MANALA_HOST_OS}
+ENV MANALA_HOST_PATH=${MANALA_HOST_PATH}
 
 RUN \
     # Disable irrelevants apt-key warnings
@@ -48,6 +50,8 @@ WORKDIR /srv/app
 
 # None
 FROM system AS init-none
+
+STOPSIGNAL SIGKILL
 
 CMD ["sleep", "9999999"]
 
@@ -164,8 +168,9 @@ FROM init-${MANALA_INIT} AS provision-none
 # Ansible
 FROM init-${MANALA_INIT} AS provision-ansible
 
-ARG ANSIBLE_CORE_VERSION=2.11.8
+ARG ANSIBLE_CORE_VERSION=2.11.12
 ARG MANALA_PROVISION_LIMIT
+ARG SYMFONY_IDE
 
 # Locale
 ENV LANG=C.UTF-8

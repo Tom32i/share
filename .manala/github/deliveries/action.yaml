@@ -1,0 +1,204 @@
+name: Release
+description: Release
+author: Elao
+
+inputs:
+  secrets:
+    description: Secrets
+    required: true
+  app:
+    description: App
+    required: false
+  tier:
+    description: Tier
+    required: true
+  ref:
+    description: Ref
+    required: false
+  release:
+    description: Release
+    type: boolean
+    default: ${{ github.job == 'release' && 'true' || 'false' }}
+  deploy:
+    description: Deploy
+    type: boolean
+    default: ${{ github.job == 'deploy' && 'true' || 'false' }}
+  deploy_ref:
+    description: Deploy Ref
+    required: false
+
+runs:
+  using: composite
+  steps:
+
+    ##############
+    # production #
+    ##############
+
+    - name: Checkout production (ref "${{ inputs.ref || 'master' }}")
+      if: inputs.tier == 'production'
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+
+    - name: Setup production
+      if: inputs.tier == 'production'
+      uses: ./.manala/github/system
+      with:
+        setup: true
+
+    - name: Release production
+      if: >
+        inputs.tier == 'production'
+        && inputs.release != 'false'
+      uses: ./.manala/github/system
+      with:
+        shell_group: 📦 Release
+        shell: |
+          make release@production \
+            AUTHOR="manala-ci-releaser <${{ github.actor }}+github@manala.io>"
+
+    - name: Create production GitHub Deployment
+      if: >
+        inputs.tier == 'production'
+        && inputs.deploy != 'false'
+      uses: chrnorm/deployment-action@releases/v1
+      id: github_deployment_0
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+        description: Deploy production
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        environment: production
+
+    - name: Deploy production
+      if: >
+        inputs.tier == 'production'
+        && inputs.deploy != 'false'
+      uses: ./.manala/github/system
+      with:
+        shell_group: 🚀 Deploy
+        shell: |
+          make deploy@production \
+            ${{ inputs.deploy_ref != '' && format('REF={0}', inputs.deploy_ref) || '' }}
+
+    - name: Update production GitHub Deployment status (success)
+      if: >
+        inputs.tier == 'production'
+        && inputs.deploy != 'false'
+        && success() && steps.github_deployment_0.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Deployed production
+        state: success
+        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
+
+    - name: Update production GitHub Deployment status (failure)
+      if: >
+        inputs.tier == 'production'
+        && inputs.deploy != 'false'
+        && failure() && steps.github_deployment_0.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Failed to deploy production
+        state: failure
+        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
+
+    - name: Update production GitHub Deployment status (cancelled)
+      if: >
+        inputs.tier == 'production'
+        && inputs.deploy != 'false'
+        && cancelled() && steps.github_deployment_0.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Cancelled deploy production
+        state: inactive
+        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
+
+    ###########
+    # staging #
+    ###########
+
+    - name: Checkout staging (ref "${{ inputs.ref || 'master' }}")
+      if: inputs.tier == 'staging'
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+
+    - name: Setup staging
+      if: inputs.tier == 'staging'
+      uses: ./.manala/github/system
+      with:
+        setup: true
+
+    - name: Release staging
+      if: >
+        inputs.tier == 'staging'
+        && inputs.release != 'false'
+      uses: ./.manala/github/system
+      with:
+        shell_group: 📦 Release
+        shell: |
+          make release@staging \
+            AUTHOR="manala-ci-releaser <${{ github.actor }}+github@manala.io>"
+
+    - name: Create staging GitHub Deployment
+      if: >
+        inputs.tier == 'staging'
+        && inputs.deploy != 'false'
+      uses: chrnorm/deployment-action@releases/v1
+      id: github_deployment_1
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+        description: Deploy staging
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        environment: staging
+
+    - name: Deploy staging
+      if: >
+        inputs.tier == 'staging'
+        && inputs.deploy != 'false'
+      uses: ./.manala/github/system
+      with:
+        shell_group: 🚀 Deploy
+        shell: |
+          make deploy@staging \
+            ${{ inputs.deploy_ref != '' && format('REF={0}', inputs.deploy_ref) || '' }}
+
+    - name: Update staging GitHub Deployment status (success)
+      if: >
+        inputs.tier == 'staging'
+        && inputs.deploy != 'false'
+        && success() && steps.github_deployment_1.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Deployed staging
+        state: success
+        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
+
+    - name: Update staging GitHub Deployment status (failure)
+      if: >
+        inputs.tier == 'staging'
+        && inputs.deploy != 'false'
+        && failure() && steps.github_deployment_1.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Failed to deploy staging
+        state: failure
+        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
+
+    - name: Update staging GitHub Deployment status (cancelled)
+      if: >
+        inputs.tier == 'staging'
+        && inputs.deploy != 'false'
+        && cancelled() && steps.github_deployment_1.outcome == 'success'
+      uses: chrnorm/deployment-status@releases/v1
+      with:
+        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
+        description: Cancelled deploy staging
+        state: inactive
+        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
