@@ -106,7 +106,7 @@ system:
         system_ohmyzsh: false
         # Php
         system_php: false
-        system_php_version: 8.1
+        system_php_version: '8.0'
         system_php_composer: "{{ system_php }}"
         system_php_composer_version: null
         system_php_sapis:
