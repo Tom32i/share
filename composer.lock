@@ -5569,16 +5569,16 @@
         },
         {
             "name": "tom32i/showcase-bundle",
-            "version": "v1.1.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Tom32i/ShowcaseBundle.git",
-                "reference": "fcee35f5994635a72ff4130e838d0bafd72042b2"
+                "reference": "0e37b2581d9d89e96898467de9cb0ec9dbd9ecec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Tom32i/ShowcaseBundle/zipball/fcee35f5994635a72ff4130e838d0bafd72042b2",
-                "reference": "fcee35f5994635a72ff4130e838d0bafd72042b2",
+                "url": "https://api.github.com/repos/Tom32i/ShowcaseBundle/zipball/0e37b2581d9d89e96898467de9cb0ec9dbd9ecec",
+                "reference": "0e37b2581d9d89e96898467de9cb0ec9dbd9ecec",
                 "shasum": ""
             },
             "require": {
@@ -5628,9 +5628,9 @@
             "homepage": "https://github.com/Tom32i/ShowcaseBundle",
             "support": {
                 "issues": "https://github.com/Tom32i/ShowcaseBundle/issues",
-                "source": "https://github.com/Tom32i/ShowcaseBundle/tree/v1.1.0"
+                "source": "https://github.com/Tom32i/ShowcaseBundle/tree/v1.1.1"
             },
-            "time": "2022-08-18T10:27:12+00:00"
+            "time": "2022-08-18T10:48:55+00:00"
         },
         {
             "name": "twig/extra-bundle",
