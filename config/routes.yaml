@@ -1,3 +1,7 @@
 tom32i_showcase:
     resource: "@Tom32iShowcaseBundle/Controller/"
     type: annotation
+
+controllers:
+    resource: ../src/Controller/
+    type: attribute
