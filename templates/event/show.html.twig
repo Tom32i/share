@@ -5,7 +5,7 @@
 {% block body %}
 <div class="container">
     {% if event.archive %}
-        <a href="{{ download(event.archive.path) }}" title="Télécharger {{ event.archive.slug }}" class="button button-outline right">
+        <a href="{{ download(event.archive.path) }}" title="Télécharger {{ event.archive.slug }}" class="button button-outline right" download>
             📥 Télécharger les photos
         </a>
     {% endif %}
