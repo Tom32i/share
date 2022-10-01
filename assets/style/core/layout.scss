@@ -22,7 +22,6 @@ video {
   max-width: 100%;
   min-height: 2em;
   text-align: center;
-  width: 100%;
 }
 
 table {
@@ -33,9 +32,9 @@ table {
   }
 }
 
-.photo {
+.image {
   display: block;
-  margin: $margin 0;
+  margin: $margin;
 }
 
 .line-link {
@@ -48,4 +47,11 @@ table {
 
 .right {
   float: right;
+}
+
+.content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }
