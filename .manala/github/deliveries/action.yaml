@@ -26,6 +26,15 @@ inputs:
   deploy_ref:
     description: Deploy Ref
     required: false
+  env:
+    description: Env vars as a single string
+    required: false
+    default: ''
+
+outputs:
+  deployment_url:
+    description: The deployed app URL
+    value: ${{ steps[format('deployment_url_{0}', inputs.tier)].outputs.deployment_url }}
 
 runs:
   using: composite
@@ -46,6 +55,7 @@ runs:
       uses: ./.manala/github/system
       with:
         setup: true
+        env: ${{ inputs.env }}
 
     - name: Release production
       if: >
@@ -58,18 +68,13 @@ runs:
           make release@production \
             AUTHOR="manala-ci-releaser <${{ github.actor }}+github@manala.io>"
 
-    - name: Create production GitHub Deployment
+    - name: Set deployment URL for production
       if: >
         inputs.tier == 'production'
         && inputs.deploy != 'false'
-      uses: chrnorm/deployment-action@releases/v1
-      id: github_deployment_0
-      with:
-        ref: ${{ inputs.ref || 'master' }}
-        description: Deploy production
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        target_url: https://share.tom32i.fr
-        environment: production
+      id: deployment_url_production
+      shell: bash
+      run: echo "deployment_url=https://share.tom32i.fr" >> $GITHUB_OUTPUT
 
     - name: Deploy production
       if: >
@@ -81,44 +86,6 @@ runs:
         shell: |
           make deploy@production \
             ${{ inputs.deploy_ref != '' && format('REF={0}', inputs.deploy_ref) || '' }}
-
-    - name: Update production GitHub Deployment status (success)
-      if: >
-        inputs.tier == 'production'
-        && inputs.deploy != 'false'
-        && success() && steps.github_deployment_0.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Deployed production
-        target_url: https://share.tom32i.fr
-        environment_url: https://share.tom32i.fr
-        state: success
-        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
-
-    - name: Update production GitHub Deployment status (failure)
-      if: >
-        inputs.tier == 'production'
-        && inputs.deploy != 'false'
-        && failure() && steps.github_deployment_0.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Failed to deploy production
-        state: failure
-        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
-
-    - name: Update production GitHub Deployment status (cancelled)
-      if: >
-        inputs.tier == 'production'
-        && inputs.deploy != 'false'
-        && cancelled() && steps.github_deployment_0.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Cancelled deploy production
-        state: inactive
-        deployment_id: ${{ steps.github_deployment_0.outputs.deployment_id }}
 
     ###########
     # staging #
@@ -135,6 +102,7 @@ runs:
       uses: ./.manala/github/system
       with:
         setup: true
+        env: ${{ inputs.env }}
 
     - name: Release staging
       if: >
@@ -147,18 +115,13 @@ runs:
           make release@staging \
             AUTHOR="manala-ci-releaser <${{ github.actor }}+github@manala.io>"
 
-    - name: Create staging GitHub Deployment
+    - name: Set deployment URL for staging
       if: >
         inputs.tier == 'staging'
         && inputs.deploy != 'false'
-      uses: chrnorm/deployment-action@releases/v1
-      id: github_deployment_1
-      with:
-        ref: ${{ inputs.ref || 'master' }}
-        description: Deploy staging
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        target_url: https://share.deployer.vm
-        environment: staging
+      id: deployment_url_staging
+      shell: bash
+      run: echo "deployment_url=https://share.deployer.vm" >> $GITHUB_OUTPUT
 
     - name: Deploy staging
       if: >
@@ -170,41 +133,3 @@ runs:
         shell: |
           make deploy@staging \
             ${{ inputs.deploy_ref != '' && format('REF={0}', inputs.deploy_ref) || '' }}
-
-    - name: Update staging GitHub Deployment status (success)
-      if: >
-        inputs.tier == 'staging'
-        && inputs.deploy != 'false'
-        && success() && steps.github_deployment_1.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Deployed staging
-        target_url: https://share.deployer.vm
-        environment_url: https://share.deployer.vm
-        state: success
-        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
-
-    - name: Update staging GitHub Deployment status (failure)
-      if: >
-        inputs.tier == 'staging'
-        && inputs.deploy != 'false'
-        && failure() && steps.github_deployment_1.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Failed to deploy staging
-        state: failure
-        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}
-
-    - name: Update staging GitHub Deployment status (cancelled)
-      if: >
-        inputs.tier == 'staging'
-        && inputs.deploy != 'false'
-        && cancelled() && steps.github_deployment_1.outcome == 'success'
-      uses: chrnorm/deployment-status@releases/v1
-      with:
-        token: ${{ fromJSON(inputs.secrets).GITHUB_TOKEN }}
-        description: Cancelled deploy staging
-        state: inactive
-        deployment_id: ${{ steps.github_deployment_1.outputs.deployment_id }}

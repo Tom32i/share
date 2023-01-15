@@ -5,6 +5,7 @@ tableOfContent: 3
 
 ## Requirements
 
+* [Manala CLI](https://manala.github.io/manala/installation/) to update the recipe
 * Make
 
 MacOS
@@ -182,7 +183,7 @@ system:
         #               }
         #           }
     php:
-        version: 8.1
+        version: 8.2
         # composer:
         #   version: 1 # Optional
         extensions:
@@ -201,7 +202,7 @@ system:
                 upload_max_filesize: 16M
                 post_max_size: 16M
     nodejs:
-        version: 16
+        version: 18
         # packages:
         #   - package: mjml
         #     version: 4.6.3
@@ -276,7 +277,7 @@ system:
     ssh:
         client:
             config: |
-                Host *.elao.run
+                Host *.rix.link
                     User app
                     ForwardAgent yes
     docker:
@@ -291,6 +292,17 @@ system:
                 ports:
                     # whoami
                     - 12345:80
+        # Optimizes Mutagen sync performances (adapt to your project structure)
+        mutagen:
+            ignore:
+                paths:
+                    # Webpack build files
+                    - /public/build/
+                    # Node modules cache (Babel, ...)
+                    - /node_modules/.cache
+                    # Symfony log & cache files
+                    - /var/cache
+                    - /var/log
 ```
 
 Details:
@@ -533,12 +545,15 @@ Here is an example of a production/staging deliveries configuration in `.manala.
 deliveries:
 
   - &delivery
-    #app: api # Optional
+    #app: api # Optional. Useful for multi-app projects (api, front, backend, etc.)
     tier: production
-    #ref: staging # Default to master
+    #ref: master # Git reference to deliver (can be a branch or a commit). Default value is "master"
     # Release
     release_repo: git@git.example.com:<vendor>/<app>-release.git
     #release_ref: master # Based on app/tier by default
+    # Whether to markup releases on original repository.
+    # If true, a commit referencing the release repository commit will be pushed to the original repository.
+    #release_markup: true
     release_tasks:
       - shell: make install@production
       - shell: make build@production
@@ -589,13 +604,14 @@ deliveries:
     #deploy_remove:
     #  - web/app_dev.php
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.1-fpm
+      - shell: sudo /bin/systemctl reload php8.2-fpm
       #- shell: sudo /bin/systemctl restart supervisor
     # GitHub
     github_ssh_key_secret: SSH_DEPLOY_KEY_PRODUCTION
 
   - << : *delivery
     tier: staging
+    ref: staging
     release_tasks:
       - shell: make install@staging
       - shell: make build@staging
@@ -645,7 +661,7 @@ Ssh
 ## Ssh to staging server
 ssh@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
 ssh@staging:
-	ssh app@foo.staging.elao.run
+	ssh app@foo.staging.rix.link
 
 # Single host...
 
@@ -666,7 +682,7 @@ sync@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
 sync@staging:
 	mkdir -p var
 	rsync --archive --compress --verbose --delete-after \
-		app@foo.staging.elao.run:/srv/app/current/var/files/ \
+		app@foo.staging.rix.link:/srv/app/current/var/files/ \
 		var/files/
 
 # Multi targets...
@@ -790,7 +806,17 @@ See [Go Template syntax](https://docs.gomplate.ca/syntax/) for more info.
 
 ## Https
 
-In  order for https to work properly, you must:
+If the project wasn't already setup for HTTPS, generate a project certificate
+
+```shell
+⇒  make provision.certificates
+```
+
+and commit the new files (It has to be done 1 time per project, usually when creating the repository and introducing the recipe).
+
+In order for HTTPS to work properly on your host, you must:
+
+### MacOS
 
 1. ensure elao ca certificate has been added to your local keychain (one time for *all* projects)
 
@@ -798,13 +824,20 @@ In  order for https to work properly, you must:
     $ sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" .manala/certificates/ca.crt
     ```
 
-2. generate a project certificate (one time *by* project, remember to commit them right after)
+2. For firefox only, browse to `about:config` and ensure `security.enterprise_roots.enabled` value is set to true (one time for *all* projects)
 
-    ```shell
-    ⇒  make provision.certificates
+### Ubuntu
+
+1. ensure elao ca certificate has been added to your local keychain (one time for *all* projects)
+
+   ```shell
+    $ sudo cp .manala/certificates/ca.crt /usr/local/share/ca-certificates
+    $ sudo update-ca-certificates
     ```
 
-3. For firefox only, browse to `about:config` and ensure `security.enterprise_roots.enabled` value is set to true
+2. For Chrone and Firefox, add .manala/certificates/ca.crt certificate on Security and Privacy (one time for *all* projects).
+   * On Chrome, `chrome://settings/certificates` > Authorities, import `.manala/certificates/ca.crt`.
+   * On Firefox, `about:preferences#privacy` > View Certificate... > Authorities, import `.manala/certificates/ca.crt`.
 
 ## Extras
 
@@ -842,6 +875,5 @@ framework:
 ## Caveats
 
 - MySQL 5.7 docker images are not available on arm64, that's why amd64 architecture is forced. Expect rare speed and stability issues.
-- Nginx official debian packages for stretch are not available on arm64, that's why debian packages are used in version `1.10`. Expect rare configuration issues.
 - OpenSSL debian packages for buster are broken on arm64, that's why bullseye ones are used. Expect rare behavior issues.
 - Firefox is blocking some ports like `10080`. Try to avoid them.

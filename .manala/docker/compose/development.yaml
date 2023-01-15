@@ -5,11 +5,11 @@ services:
     ###########
 
     mailhog:
-        image: mailhog/mailhog:v1.0.1
+        image: jcalonso/mailhog:v1.0.1
         entrypoint:
-            - /bin/sh
-            - -c
-            - MailHog -smtp-bind-addr 0.0.0.0:25 &>/dev/null
+            - /MailHog
+            - -smtp-bind-addr
+            - 0.0.0.0:25
         network_mode: service:app
 
     #######
@@ -22,7 +22,7 @@ services:
                 MANALA_PROVISION: ansible
                 MANALA_PROVISION_LIMIT: development
         ports:
-            # Usuals
+            # Usuals (Webpack dev-server, …)
             - 2288:8080
             # MailHog
             - 2225:8025

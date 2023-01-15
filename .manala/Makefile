@@ -37,7 +37,6 @@ HELP += $(call help,setup,                 Setup environment (DEBUG))
 setup:
 	$(_docker_compose) up \
 		--build \
-		--detach \
 		--wait
 	$(setup)
 	$(MAKE) help
@@ -60,7 +59,7 @@ reload:
 HELP += $(call help,sh,                    Open shell to the environment)
 sh:
 	$(_docker_compose_exec) \
-		sh -c "if [ -x \"$$(command -v zsh)\" ] ; then exec zsh --login ; else exec bash --login ; fi"
+		sh -c "if [ -x \"\$$(command -v zsh)\" ] ; then exec zsh --login ; else exec bash --login ; fi"
 
 HELP += $(call help,destroy,               Stop and delete environment)
 destroy:

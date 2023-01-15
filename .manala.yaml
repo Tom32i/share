@@ -36,7 +36,7 @@ system:
               config:
                   date.timezone: UTC
     nodejs:
-        version: 16
+        version: 18
     files:
         - path: /srv/app/var/log
           src: /srv/log

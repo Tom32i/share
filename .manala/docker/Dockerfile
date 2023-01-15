@@ -168,30 +168,39 @@ FROM init-${MANALA_INIT} AS provision-none
 # Ansible
 FROM init-${MANALA_INIT} AS provision-ansible
 
-ARG ANSIBLE_CORE_VERSION=2.11.12
+ARG ANSIBLE_CORE_VERSION=2.14.0
 ARG MANALA_PROVISION_LIMIT
 ARG SYMFONY_IDE
 
 # Locale
 ENV LANG=C.UTF-8
 
+# As managed node
 RUN \
     # Disable irrelevants apt-key warnings
     export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
     # Disable all debian user interaction
     && export DEBIAN_FRONTEND="noninteractive" \
     && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
-        python3 python3-pip \
-        python3-apt \
+        python3 \
+        python3-apt
+
+# As controller node
+RUN \
+    # Disable irrelevants apt-key warnings
+    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
+    # Disable all debian user interaction
+    && export DEBIAN_FRONTEND="noninteractive" \
+    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+        python3-pip \
     && pip3 install ansible-core==${ANSIBLE_CORE_VERSION} \
     && mkdir -p /etc/ansible/ \
     && printf "\
 [defaults]\n\
 force_color = True\n\
-gather_subset = all,!hardware\n\
 display_skipped_hosts = False\n\
 retry_files_enabled = False\n\
-stdout_callback = yaml\n\
+stdout_callback = community.general.yaml\n\
 [ssh_connection]\n\
 pipelining = True\n\
 [privilege_escalation]\n\

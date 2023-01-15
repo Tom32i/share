@@ -98,7 +98,7 @@ system:
         system_ngrok: false
         # NodeJS
         system_nodejs: false
-        system_nodejs_version: 16
+        system_nodejs_version: 18
         system_nodejs_npm: "{{ system_nodejs }}"
         system_nodejs_packages: []
         system_nodejs_yarn: false
@@ -106,7 +106,7 @@ system:
         system_ohmyzsh: false
         # Php
         system_php: false
-        system_php_version: 8.1
+        system_php_version: 8.2
         system_php_composer: "{{ system_php }}"
         system_php_composer_version: null
         system_php_sapis:
@@ -130,13 +130,14 @@ system:
         system_redis_server_config: {}
         # Ssh
         system_ssh: false
-        system_ssh_client_config: |
+        system_ssh_client_config: |+
           Host tom32i.fr
               User tom32i
               ForwardAgent yes
           Host deployer.vm
               User tom32i
               ForwardAgent yes
+        
         # Supervisor
         system_supervisor: false
         system_supervisor_configs: []
