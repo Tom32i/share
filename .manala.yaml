@@ -21,7 +21,7 @@ project:
 system:
     version: 11
     php:
-        version: 8.1
+        version: 8.2
         extensions:
           # Symfony
           - intl
@@ -120,7 +120,7 @@ deliveries:
     deploy_tasks:
       - shell: make warmup@production
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.1-fpm
+      - shell: sudo /bin/systemctl reload php8.2-fpm
     deploy_url: https://share.tom32i.fr
 
   - <<: *delivery
