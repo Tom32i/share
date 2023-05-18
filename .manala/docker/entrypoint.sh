@@ -2,12 +2,26 @@
 
 set -e
 
-# If ssh-agent bind differs from sock, establish an unprivileged relay
-if [ -n "${SSH_AUTH_SOCK}" ] && [ -n "${MANALA_SSH_AUTH_SOCK_BIND}" ] && [ "${SSH_AUTH_SOCK}" != "${MANALA_SSH_AUTH_SOCK_BIND}" ]; then
-  printf "Bind privileged ssh-agent socket\n"
-  socat \
-    UNIX-LISTEN:${SSH_AUTH_SOCK},fork,mode=777 \
-    UNIX-CONNECT:${MANALA_SSH_AUTH_SOCK_BIND} &
+# Ssh agent bridge
+if [ -n "${SSH_AUTH_SOCK}" ]; then
+  sh -c " \
+    while true; do \
+      socat \
+        UNIX-LISTEN:/var/run/ssh-auth-bridge.sock,fork,mode=777 \
+        UNIX-CONNECT:/var/run/ssh-auth.sock; \
+    done \
+  " &
+fi
+
+# Docker bridge
+if [ -n "${DOCKER_HOST}" ]; then
+  sh -c " \
+    while true; do \
+      socat -t 600 \
+        UNIX-LISTEN:/var/run/docker-bridge.sock,fork,mode=777 \
+        UNIX-CONNECT:/var/run/docker.sock; \
+    done \
+  " &
 fi
 
 # Ssh key

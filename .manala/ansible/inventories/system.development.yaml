@@ -31,9 +31,6 @@ system:
             system_influxdb: false
             # Locales
             system_locales: true
-            # Network
-            system_network: false
-            system_network_hosts: {}
             # Nginx
             system_nginx: true
             # Ngrok

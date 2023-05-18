@@ -5,9 +5,6 @@
     "composer/xdebug-handler": {
         "version": "2.0.2"
     },
-    "deployer/dist": {
-        "version": "v6.8.0"
-    },
     "doctrine/annotations": {
         "version": "1.13",
         "recipe": {

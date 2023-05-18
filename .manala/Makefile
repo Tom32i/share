@@ -1,169 +1,211 @@
-# Relative root dir ("."|".."|"../.."|…)
-_DIR := $(patsubst %/.,%,$(patsubst %.manala/..,%.,$(patsubst %Makefile,%..,$(lastword $(MAKEFILE_LIST)))))
-# Is current dir root ? (""|"1")
-_ROOT = $(if $(filter .,$(_DIR)),1)
-# Relative current dir ("."|"foo"|"foo/bar"|…)
-_CURRENT_DIR = $(patsubst ./%,%,.$(patsubst $(realpath $(CURDIR)/$(_DIR))%,%,$(CURDIR)))
+# Project root dir, relative to current dir (.|..|../..|…)
+MANALA_DIR := $(patsubst %/.,%,$(patsubst %.manala/..,%.,$(patsubst %Makefile,%..,$(lastword $(MAKEFILE_LIST)))))
+# Current dir, relative to project root dir (.|dir|dir/dir|…)
+MANALA_CURRENT_DIR = $(patsubst ./%,%,.$(patsubst $(realpath $(CURDIR)/$(MANALA_DIR))%,%,$(CURDIR)))
+# Is current dir root ? (|1)
+MANALA_CURRENT_ROOT = $(if $(filter .,$(MANALA_CURRENT_DIR)),1)
 
 ###########
 # Project #
 ###########
 
-define project_host
+define manala_project_host
 share.ela.ooo$(if $(1),:22$(shell printf "%02d" $(1)))
 endef
 
--include $(_DIR)/.manala/make/text.mk
--include $(_DIR)/.manala/make/help.mk
--include $(_DIR)/.manala/make/os.mk
--include $(_DIR)/.manala/docker/make.mk
--include $(_DIR)/.manala/ansible/make.mk
--include $(_DIR)/.manala/make/try.mk
--include $(_DIR)/.manala/make/git.mk
--include $(_DIR)/.manala/make/semver.mk
+-include $(MANALA_DIR)/.manala/make/text.mk
+-include $(MANALA_DIR)/.manala/make/help.mk
+-include $(MANALA_DIR)/.manala/make/os.mk
+-include $(MANALA_DIR)/.manala/docker/docker.mk
+-include $(MANALA_DIR)/.manala/docker/mutagen.mk
+-include $(MANALA_DIR)/.manala/ansible/ansible.mk
+-include $(MANALA_DIR)/.manala/make/try.mk
+-include $(MANALA_DIR)/.manala/make/git.mk
+-include $(MANALA_DIR)/.manala/make/semver.mk
+
+##########
+# Docker #
+##########
+
+MANALA_DOCKER_COMPOSE_ENV += \
+	MANALA_HOST_OS=$(MANALA_OS) \
+	MANALA_HOST_DIR=$(abspath $(MANALA_DIR))
+MANALA_DOCKER_COMPOSE_FILE += \
+	$(MANALA_DIR)/.manala/docker/compose/init.sysv.yaml \
+	$(if $(SYMFONY_IDE), $(MANALA_DIR)/.manala/docker/compose/symfony.yaml)
+MANALA_DOCKER_COMPOSE_PROFILE ?= development
+
+# Command
+MANALA_DOCKER_COMMAND = exec --user app
+MANALA_DOCKER_COMMAND_SERVICE = app
+
+MANALA_DOCKER_COMMAND_DEFAULT_DIR = /srv/app/$(MANALA_CURRENT_DIR)
+
+# Services
+
+ifeq ($(MANALA_DOCKER_COMPOSE_PROFILE),development)
+MANALA_DOCKER_DEFAULT_SERVICES += mailhog
+endif
 
 ###############
 # Environment #
 ###############
 
-HELP += $(call help_section, Environment)
+MANALA_HELP += $(call manala_help_section, Environment)
 
 # Docker commands only available *OUTSIDE* docker environment
-ifndef DOCKER
+ifndef MANALA_DOCKER
 
 # Setup commands only available *IN* root directory
-ifdef _ROOT
-HELP += $(call help,setup,                 Setup environment (DEBUG))
+ifdef MANALA_CURRENT_ROOT
+MANALA_HELP += $(call manala_help,setup,                 Setup environment (DEBUG))
+setup: MANALA_DOCKER_DEBUG = $(if $(DEBUG),1)
 setup:
-	$(_docker_compose) up \
+	$(manala_docker_compose) up \
 		--build \
 		--wait
 	$(setup)
 	$(MAKE) help
 endif
 
-HELP += $(call help,up,                    Start the environment)
+MANALA_HELP += $(call manala_help,up,                    Start the environment)
 up:
-	$(_docker_compose) start
+	$(manala_docker_compose) start
 	$(MAKE) help.project
 
-HELP += $(call help,halt,                  Stop the environment)
+MANALA_HELP += $(call manala_help,halt,                  Stop the environment)
 halt:
-	$(_docker_compose) stop
+	$(manala_docker_compose) stop
 
-HELP += $(call help,reload,                Restart the environment)
+MANALA_HELP += $(call manala_help,reload,                Restart the environment)
 reload:
-	$(_docker_compose) restart
+	$(manala_docker_compose) restart
 	$(MAKE) help.project
 
-HELP += $(call help,sh,                    Open shell to the environment)
+MANALA_HELP += $(call manala_help,sh,                    Shell to the environment (DIR))
+sh: MANALA_DOCKER_COMMAND_DIR ?= $(if $(findstring command line,$(origin DIR)),$(DIR))
 sh:
-	$(_docker_compose_exec) \
-		sh -c "if [ -x \"\$$(command -v zsh)\" ] ; then exec zsh --login ; else exec bash --login ; fi"
+	if [ ! -t 0 ] ; then \
+		$(call manala_docker_command, --no-TTY) sh -s ; \
+	else \
+		$(manala_docker_command) sh -c ' \
+			if [ -x "$$(command -v zsh)" ] ; then \
+				exec zsh --login ; \
+			else \
+				exec bash --login ; \
+			fi \
+		' ; \
+	fi
 
-HELP += $(call help,destroy,               Stop and delete environment)
+MANALA_HELP += $(call manala_help,destroy,               Stop and delete environment)
 destroy:
-	$(_docker_compose) down \
+	$(manala_docker_compose) down \
 		--rmi local \
 		--volumes \
 		--remove-orphans
 
-HELP += $(call help,docker,                Arbitrary docker compose commands)
+MANALA_HELP += $(call manala_help,docker,                Arbitrary docker compose commands)
 ifeq (docker, $(firstword $(MAKECMDGOALS)))
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@true)
 docker:
-	$(_docker_compose) $(ARGS)
+	$(manala_docker_compose) $(ARGS)
 endif
 
 endif
 
-HELP += $(call help,provision,             Provision the environment (TAGS|DIFF|VERBOSE|LIMIT))
-provision: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
-provision: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories
-provision: _ANSIBLE_PLAYBOOK_BECOME = 1
+MANALA_HELP += $(call manala_help,provision,             Provision the environment (TAGS|DIFF|VERBOSE|LIMIT|DEBUG))
+provision: SHELL := $(or $(MANALA_DOCKER_SHELL),$(SHELL))
+provision: MANALA_ANSIBLE_PLAYBOOK_INVENTORY = $(MANALA_DIR)/.manala/ansible/inventories
+provision: MANALA_ANSIBLE_PLAYBOOK_BECOME = 1
+provision: MANALA_ANSIBLE_PLAYBOOK_TAGS = $(TAGS)
+provision: MANALA_ANSIBLE_PLAYBOOK_CHECK = $(if $(DIFF),1)
+provision: MANALA_ANSIBLE_PLAYBOOK_DIFF = $(if $(DIFF),1)
+provision: MANALA_ANSIBLE_PLAYBOOK_VERBOSE_MORE = $(if $(VERBOSE),1)
+provision: MANALA_ANSIBLE_PLAYBOOK_LIMIT = $(if $(LIMIT),$(LIMIT),development)
+provision: MANALA_ANSIBLE_DEBUG = $(if $(DEBUG),1)
 provision:
-	$(call log, Install ansible galaxy collections)
-	$(_ansible_galaxy_collection_install) \
-		$(_DIR)/.manala/ansible/collections/requirements.yaml
-	$(call log, Run ansible playbook)
-	$(_ansible_playbook) \
-		$(_DIR)/.manala/ansible/system.yaml
+	$(call manala_log, Install ansible galaxy collections)
+	$(manala_ansible_galaxy_collection_install) \
+		$(MANALA_DIR)/.manala/ansible/collections/requirements.yaml
+	$(call manala_log, Run ansible playbook)
+	$(manala_ansible_playbook) \
+		$(MANALA_DIR)/.manala/ansible/system.yaml
 
-HELP += $(call help,provision.apt,         Provision the environment - Apt (DIFF|VERBOSE))
-provision.apt: _ANSIBLE_PLAYBOOK_TAGS = apt
+MANALA_HELP += $(call manala_help,provision.apt,         Provision the environment - Apt (DIFF|VERBOSE))
+provision.apt: TAGS = apt
 provision.apt: provision
 
-HELP += $(call help,provision.files,       Provision the environment - Files (DIFF|VERBOSE))
-provision.files: _ANSIBLE_PLAYBOOK_TAGS = files
+MANALA_HELP += $(call manala_help,provision.files,       Provision the environment - Files (DIFF|VERBOSE))
+provision.files: TAGS = files
 provision.files: provision
 
-HELP += $(call help,provision.nginx,       Provision the environment - Nginx (DIFF|VERBOSE))
-provision.nginx: _ANSIBLE_PLAYBOOK_TAGS = nginx
+MANALA_HELP += $(call manala_help,provision.nginx,       Provision the environment - Nginx (DIFF|VERBOSE))
+provision.nginx: TAGS = nginx
 provision.nginx: provision
 
-HELP += $(call help,provision.php,         Provision the environment - Php (DIFF|VERBOSE))
-provision.php: _ANSIBLE_PLAYBOOK_TAGS = php
+MANALA_HELP += $(call manala_help,provision.php,         Provision the environment - Php (DIFF|VERBOSE))
+provision.php: TAGS = php
 provision.php: provision
 
-HELP += $(call help,provision.certificates,Provision the environment - Certificates (DIFF|VERBOSE))
-provision.certificates: _ANSIBLE_PLAYBOOK_TAGS = certificates
-provision.certificates: _ANSIBLE_PLAYBOOK_EXTRA_VARS = certificates_prompt=true
+MANALA_HELP += $(call manala_help,provision.certificates,Provision the environment - Certificates (DIFF|VERBOSE))
+provision.certificates: TAGS = certificates
+provision.certificates: MANALA_ANSIBLE_PLAYBOOK_EXTRA_VARS = certificates_prompt=true
 provision.certificates: provision
 
 ##############
 # Deliveries #
 ##############
 
-HELP += $(call help_section, Deliveries)
+MANALA_HELP += $(call manala_help_section, Deliveries)
 
-HELP += $(call help,release@production,Release in production (AUTHOR))
-release@production: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
-release@production: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/release.yaml
-release@production: _ANSIBLE_PLAYBOOK_LIMIT = production
-release@production: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
+MANALA_HELP += $(call manala_help,release@production,Release in production (AUTHOR))
+release@production: SHELL := $(or $(MANALA_DOCKER_SHELL),$(SHELL))
+release@production: MANALA_ANSIBLE_PLAYBOOK_INVENTORY = $(MANALA_DIR)/.manala/ansible/inventories/release.yaml
+release@production: MANALA_ANSIBLE_PLAYBOOK_LIMIT = production
+release@production: MANALA_ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
 release@production:
-	$(call log, Run ansible playbook)
-	$(_ansible_playbook) \
-		$(_DIR)/.manala/ansible/release.yaml
+	$(call manala_log, Run ansible playbook)
+	$(manala_ansible_playbook) \
+		$(MANALA_DIR)/.manala/ansible/release.yaml
 
-HELP += $(call help,deploy@production,Deploy in production (REF))
-deploy@production: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
-deploy@production: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/deploy.yaml
-deploy@production: _ANSIBLE_PLAYBOOK_LIMIT = production
-deploy@production: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(REF),'{"deploy_strategy_git_ref": "$(REF)"}')
+MANALA_HELP += $(call manala_help,deploy@production,Deploy in production (REF))
+deploy@production: SHELL := $(or $(MANALA_DOCKER_SHELL),$(SHELL))
+deploy@production: MANALA_ANSIBLE_PLAYBOOK_INVENTORY = $(MANALA_DIR)/.manala/ansible/inventories/deploy.yaml
+deploy@production: MANALA_ANSIBLE_PLAYBOOK_LIMIT = production
+deploy@production: MANALA_ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(REF),'{"deploy_strategy_git_ref": "$(REF)"}')
 deploy@production:
-	$(call log, Run ansible playbook)
-	$(_ansible_playbook) \
-		$(_DIR)/.manala/ansible/deploy.yaml
-	$(call message_success, Visit https://share.tom32i.fr)
+	$(call manala_log, Run ansible playbook)
+	$(manala_ansible_playbook) \
+		$(MANALA_DIR)/.manala/ansible/deploy.yaml
+	$(call manala_message_success, Visit https://share.tom32i.fr)
 
-HELP += $(call help,release@staging,Release in staging (AUTHOR))
-release@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
-release@staging: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/release.yaml
-release@staging: _ANSIBLE_PLAYBOOK_LIMIT = staging
-release@staging: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
+MANALA_HELP += $(call manala_help,release@staging,Release in staging (AUTHOR))
+release@staging: SHELL := $(or $(MANALA_DOCKER_SHELL),$(SHELL))
+release@staging: MANALA_ANSIBLE_PLAYBOOK_INVENTORY = $(MANALA_DIR)/.manala/ansible/inventories/release.yaml
+release@staging: MANALA_ANSIBLE_PLAYBOOK_LIMIT = staging
+release@staging: MANALA_ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(AUTHOR),"release_author='$(AUTHOR)'")
 release@staging:
-	$(call log, Run ansible playbook)
-	$(_ansible_playbook) \
-		$(_DIR)/.manala/ansible/release.yaml
+	$(call manala_log, Run ansible playbook)
+	$(manala_ansible_playbook) \
+		$(MANALA_DIR)/.manala/ansible/release.yaml
 
-HELP += $(call help,deploy@staging,Deploy in staging (REF))
-deploy@staging: SHELL := $(or $(DOCKER_SHELL),$(SHELL))
-deploy@staging: _ANSIBLE_PLAYBOOK_INVENTORY = $(_DIR)/.manala/ansible/inventories/deploy.yaml
-deploy@staging: _ANSIBLE_PLAYBOOK_LIMIT = staging
-deploy@staging: _ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(REF),'{"deploy_strategy_git_ref": "$(REF)"}')
+MANALA_HELP += $(call manala_help,deploy@staging,Deploy in staging (REF))
+deploy@staging: SHELL := $(or $(MANALA_DOCKER_SHELL),$(SHELL))
+deploy@staging: MANALA_ANSIBLE_PLAYBOOK_INVENTORY = $(MANALA_DIR)/.manala/ansible/inventories/deploy.yaml
+deploy@staging: MANALA_ANSIBLE_PLAYBOOK_LIMIT = staging
+deploy@staging: MANALA_ANSIBLE_PLAYBOOK_EXTRA_VARS = $(if $(REF),'{"deploy_strategy_git_ref": "$(REF)"}')
 deploy@staging:
-	$(call log, Run ansible playbook)
-	$(_ansible_playbook) \
-		$(_DIR)/.manala/ansible/deploy.yaml
-	$(call message_success, Visit https://share.deployer.vm)
+	$(call manala_log, Run ansible playbook)
+	$(manala_ansible_playbook) \
+		$(MANALA_DIR)/.manala/ansible/deploy.yaml
+	$(call manala_message_success, Visit https://share.deployer.vm)
 
 ########
 # Help #
 ########
 
-HELP_PROJECT = $(COLOR_COMMENT)┏(°.°)┛┗(°.°)┓$(COLOR_RESET) ♪♫ Let's party ♫♪ $(COLOR_COMMENT)┗(°.°)┛┏(°.°)┓$(COLOR_RESET)\n
-HELP_PROJECT += $(call help,Http,         http://$(call project_host, 80))
-HELP_PROJECT += $(call help,Https,        https://$(call project_host, 43))
-HELP_PROJECT += $(call help,MailHog,      http://$(call project_host, 25))
+MANALA_HELP_PROJECT = $(MANALA_COLOR_COMMENT)┏(°.°)┛┗(°.°)┓$(MANALA_COLOR_RESET) ♪♫ Let's party ♫♪ $(MANALA_COLOR_COMMENT)┗(°.°)┛┏(°.°)┓$(MANALA_COLOR_RESET)\n
+MANALA_HELP_PROJECT += $(call manala_help,Http,         http://$(call manala_project_host, 80))
+MANALA_HELP_PROJECT += $(call manala_help,Https,        https://$(call manala_project_host, 43))
+MANALA_HELP_PROJECT += $(call manala_help,MailHog,      http://$(call manala_project_host, 25))

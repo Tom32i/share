@@ -1,7 +1,7 @@
 # Init system (none|sysv|openrc|systemd)
-ARG MANALA_INIT=none
+ARG MANALA_INIT="none"
 # Provision system (none|ansible)
-ARG MANALA_PROVISION=none
+ARG MANALA_PROVISION="none"
 
 ##########
 # System #
@@ -9,38 +9,43 @@ ARG MANALA_PROVISION=none
 
 FROM debian:11-slim AS system
 
-LABEL maintainer="Elao <contact@elao.com>"
+LABEL org.opencontainers.image.authors="Elao <contact@elao.com>"
 
-ARG MANALA_HOST_OS=linux
-ARG MANALA_HOST_PATH
-ARG MANALA_USER_ID=1000
-ARG MANALA_GROUP_ID=1000
+ARG DEBIAN_FRONTEND="noninteractive"
 
-# Used for checking we're running inside a container
+ARG MANALA_HOST_OS="linux"
+ARG MANALA_HOST_DIR
+ARG MANALA_USER_ID="1000"
+ARG MANALA_GROUP_ID="1000"
+
+ENV MANALA_HOST_OS="${MANALA_HOST_OS}"
+ENV MANALA_HOST_DIR="${MANALA_HOST_DIR}"
+
+# The 'container' environment variable tells systemd that it's running inside a
+# Docker container environment.
+# It's also internally used for checking we're running inside a container.
 ENV container="docker"
-ENV MANALA_HOST_OS=${MANALA_HOST_OS}
-ENV MANALA_HOST_PATH=${MANALA_HOST_PATH}
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
-    && apt-get --quiet --allow-releaseinfo-change update \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --purge --auto-remove dist-upgrade \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+    apt-get --quiet update \
+    && apt-get --quiet --yes --purge --autoremove upgrade \
+    && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         gnupg \
         ca-certificates \
         sudo \
         curl \
         make \
         socat \
+    # Apt keyrings (debian < bookworm)
+    && mkdir --verbose --parents /etc/apt/keyrings \
     # User
     && addgroup --gid ${MANALA_GROUP_ID} app \
-    && adduser --disabled-password --gecos "" app --uid ${MANALA_USER_ID} --ingroup app \
-    # Sudo
-    && echo "app ALL=(ALL) NOPASSWD:ALL" \
-        > /etc/sudoers.d/app
+    && adduser --home /home/app --shell /bin/bash --uid ${MANALA_USER_ID} --gecos app --ingroup app --disabled-password app \
+    && echo "app ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/app \
+    # Clean
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/app
 
@@ -61,14 +66,11 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM system AS init-sysv
 
 RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
     # Work around chroot check to avoid sysvinit restart after install
-    && mv /usr/bin/ischroot /usr/bin/ischroot_ \
+    mv /usr/bin/ischroot /usr/bin/ischroot_ \
     && ln -s /bin/true /usr/bin/ischroot \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+    && apt-get --quiet update \
+    && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         sysvinit-core \
     && mv /usr/bin/ischroot_ /usr/bin/ischroot \
     # Disable getty
@@ -96,11 +98,12 @@ RUN \
         umountfs \
         umountroot \
     # Block systemd replacement
-    && printf "\
-Package: systemd-sysv\n\
+    && printf "Package: systemd-sysv\n\
 Pin: release *\n\
 Pin-Priority: -1\n\
-" > /etc/apt/preferences
+" > /etc/apt/preferences \
+    # Clean
+    && rm -rf /var/lib/apt/lists/*
 
 STOPSIGNAL SIGINT
 
@@ -112,13 +115,12 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM system AS init-openrc
 
 RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
-    && rm -f /etc/init.d/hwclock.sh \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
-        openrc
+    rm -f /etc/init.d/hwclock.sh \
+    && apt-get --quiet update \
+    && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
+        openrc \
+    # Clean
+    && rm -rf /var/lib/apt/lists/*
 
 STOPSIGNAL SIGINT
 
@@ -130,11 +132,8 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM system AS init-systemd
 
 RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+    apt-get --quiet update \
+    && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         systemd dbus \
     && systemctl set-default multi-user.target \
     && sed -i 's/#\(ForwardToConsole=\).*$/\1yes/' \
@@ -148,7 +147,9 @@ RUN \
         /lib/systemd/system/sockets.target.wants/*udev* \
         /lib/systemd/system/sockets.target.wants/*initctl* \
         /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev* \
-        /lib/systemd/system/systemd-update-utmp*
+        /lib/systemd/system/systemd-update-utmp* \
+    # Clean
+    && rm -rf /var/lib/apt/lists/*
 
 VOLUME /sys/fs/cgroup
 
@@ -168,35 +169,24 @@ FROM init-${MANALA_INIT} AS provision-none
 # Ansible
 FROM init-${MANALA_INIT} AS provision-ansible
 
-ARG ANSIBLE_CORE_VERSION=2.14.0
+ARG ANSIBLE_VERSION="2.14.3"
 ARG MANALA_PROVISION_LIMIT
 ARG SYMFONY_IDE
 
 # Locale
-ENV LANG=C.UTF-8
-
-# As managed node
+ENV LANG="C.UTF-8"
 RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+    apt-get --quiet update \
+    && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
+        # As managed node
         python3 \
-        python3-apt
-
-# As controller node
-RUN \
-    # Disable irrelevants apt-key warnings
-    export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE="1" \
-    # Disable all debian user interaction
-    && export DEBIAN_FRONTEND="noninteractive" \
-    && apt-get --quiet --yes -o=Dpkg::Use-Pty=0 --no-install-recommends --verbose-versions install \
+        python3-apt \
+        # As controller node
         python3-pip \
-    && pip3 install ansible-core==${ANSIBLE_CORE_VERSION} \
-    && mkdir -p /etc/ansible/ \
-    && printf "\
-[defaults]\n\
+    && pip3 --no-cache-dir --disable-pip-version-check install \
+        ansible-core==${ANSIBLE_VERSION} \
+    && mkdir --verbose --parents /etc/ansible \
+    && printf "[defaults]\n\
 force_color = True\n\
 display_skipped_hosts = False\n\
 retry_files_enabled = False\n\
@@ -205,7 +195,9 @@ stdout_callback = community.general.yaml\n\
 pipelining = True\n\
 [privilege_escalation]\n\
 become_flags = -E\n\
-" > /etc/ansible/ansible.cfg
+" > /etc/ansible/ansible.cfg \
+    # Clean
+    && rm -rf /var/lib/apt/lists/*
 
 COPY Makefile      ./.manala/
 COPY ansible/      ./.manala/ansible/
