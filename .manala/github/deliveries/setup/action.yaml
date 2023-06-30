@@ -1,0 +1,79 @@
+name: Set up
+
+description: Deliveries - Set up
+
+inputs:
+  app:
+    description: App
+    required: false
+  tier:
+    description: Tier
+    required: true
+  ref:
+    description: Ref
+    required: false
+    # default depends on the selected app+tier (delivery) if none explicitly provided.
+    # E.g: 'main' for production, 'staging' for staging, etc… depending on .manala.yaml deliveries config.
+  env:
+    description: Env vars as a single string
+    required: false
+  services:
+    description: Services
+    required: false
+#  ssh_key:
+#    description: Ssh Key
+#    required: false
+  secrets:
+    description: Secrets
+    required: true
+
+runs:
+  using: composite
+  steps:
+
+    ##############
+    # production #
+    ##############
+
+    - name: Checkout production (ref "${{ inputs.ref || 'master' }}")
+      if: inputs.tier == 'production'
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+        path: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
+
+    - name: Setup SSH Key for production
+      id: setup_ssh_key_production
+      if: inputs.tier == 'production'
+      shell: bash
+      run: echo "ssh_key_secret=SSH_DEPLOY_KEY" >> $GITHUB_OUTPUT
+
+    ###########
+    # staging #
+    ###########
+
+    - name: Checkout staging (ref "${{ inputs.ref || 'master' }}")
+      if: inputs.tier == 'staging'
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.ref || 'master' }}
+        path: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
+
+    - name: Setup SSH Key for staging
+      id: setup_ssh_key_staging
+      if: inputs.tier == 'staging'
+      shell: bash
+      run: echo "ssh_key_secret=SSH_DEPLOY_KEY" >> $GITHUB_OUTPUT
+
+    #########
+    # Setup #
+    #########
+
+    - name: >
+        Set up delivery
+        ${{ inputs.app && format('{0}@', inputs.app) || '' }}${{ inputs.tier }}
+      uses: ./.manala/github/integration/setup
+      with:
+        dir: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
+        env: ${{ inputs.env }}
+        ssh_key: ${{ fromJSON(inputs.secrets)[steps[format('setup_ssh_key_{0}_{1}', inputs.app, inputs.tier)].outputs.ssh_key_secret] }}

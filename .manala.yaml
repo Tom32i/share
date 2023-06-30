@@ -36,7 +36,7 @@ system:
               config:
                   date.timezone: UTC
     nodejs:
-        version: 18
+        version: 20
     files:
         - path: /srv/app/var/log
           src: /srv/log
@@ -81,6 +81,19 @@ system:
                     User tom32i
                     ForwardAgent yes
 
+    docker:
+        # Optimizes Mutagen sync performances (adapt to your project structure)
+        mutagen:
+           ignore:
+               paths:
+                   # Webpack build files
+                   - /public/build/
+                   # Node modules cache (Babel, ...)
+                   - /node_modules/.cache
+                   # Symfony log & cache files
+                   - /var/cache
+                   - /var/log
+
 ##############
 # Deliveries #
 ##############
@@ -122,6 +135,8 @@ deliveries:
     deploy_post_tasks:
       - shell: sudo /bin/systemctl reload php8.2-fpm
     deploy_url: https://share.tom32i.fr
+    # Github
+    github_ssh_key_secret: SSH_DEPLOY_KEY
 
   - <<: *delivery
     tier: staging

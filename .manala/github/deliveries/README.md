@@ -8,6 +8,12 @@ Most common environments are `production` and `staging`, but you might have mult
 
 ## Usage
 
+> **Warning**: This is the previous documentation for deliveries.
+>
+> Please now consult:
+> - [./release/README.md](./release/README.md) for release workflow
+> - [./deploy/README.md](./deploy/README.md) for deploy workflow
+
 ### Release Workflow
 
 `.github/workflows/release.yaml`:

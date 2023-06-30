@@ -26,3 +26,9 @@ x-mutagen:
             alpha: ../..
             beta: volume://app
             mode: two-way-resolved
+            ignore:
+                paths:
+                    - /public/build/
+                    - /node_modules/.cache
+                    - /var/cache
+                    - /var/log

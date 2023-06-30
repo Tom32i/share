@@ -201,6 +201,46 @@ deploy@staging:
 		$(MANALA_DIR)/.manala/ansible/deploy.yaml
 	$(call manala_message_success, Visit https://share.deployer.vm)
 
+#######################
+# Deliveries Triggers #
+#######################
+
+MANALA_HELP += $(call manala_help_section, Deliveries Triggers)
+
+MANALA_HELP += $(call manala_help,trigger-release@production,Trigger release in production)
+trigger-release@production:
+	gh workflow run release \
+		--field tier=production
+
+MANALA_HELP += $(call manala_help,trigger-deploy@production,Trigger deploy in production (REF))
+trigger-deploy@production:
+	gh workflow run deploy \
+		$(if $(REF),--field ref=$(REF)) \
+		--field tier=production
+
+MANALA_HELP += $(call manala_help,trigger-release+deploy@production,Trigger release + deploy in production)
+trigger-release+deploy@production:
+	gh workflow run release \
+		--field deploy=true \
+		--field tier=production
+
+MANALA_HELP += $(call manala_help,trigger-release@staging,Trigger release in staging)
+trigger-release@staging:
+	gh workflow run release \
+		--field tier=staging
+
+MANALA_HELP += $(call manala_help,trigger-deploy@staging,Trigger deploy in staging (REF))
+trigger-deploy@staging:
+	gh workflow run deploy \
+		$(if $(REF),--field ref=$(REF)) \
+		--field tier=staging
+
+MANALA_HELP += $(call manala_help,trigger-release+deploy@staging,Trigger release + deploy in staging)
+trigger-release+deploy@staging:
+	gh workflow run release \
+		--field deploy=true \
+		--field tier=staging
+
 ########
 # Help #
 ########

@@ -202,7 +202,7 @@ system:
                 upload_max_filesize: 16M
                 post_max_size: 16M
     nodejs:
-        version: 18
+        version: 20
         # packages:
         #   - package: mjml
         #     version: 4.6.3
@@ -216,9 +216,15 @@ system:
     #         jobs:
     #           # Foo - Bar
     #           - command: php bin/console app:foo:bar --no-interaction -vv >> /srv/log/cron.foo-bar.log 2>&1
-    #             minute: 0
+    #             # From Monday to Friday 05:15am
+    #             hour: 5
+    #             minute: 15
+    #             day: *
+    #             month: *
+    #             weekday: 1-5
     #             # Dev
     #             state: absent
+    #             # CRON documentation : https://docs.ansible.com/ansible/latest/collections/ansible/builtin/cron_module.html
     # supervisor:
     #     configs:
     #       - file: app.conf
@@ -311,81 +317,6 @@ Details:
   - `ports_prefix`: docker network behavior force `localhost` usage for all projects. In order to runs multiple projects simultaneously, a kind of range ports must be set to avoid conflicts. Choose a prefix value, greater or equal to 20, and lower or equal to 640, like 123. All project ports will be based on this value, like 12380 for http or 12343 for https accesses.
 
 ## Integration
-
-### Jenkins
-
-Here are some examples of integration configurations in `.manala.yaml` for Jenkins:
-
-```yaml
-###############
-# Integration #
-###############
-
-integration:
-    jenkins:
-        pipeline:
-            tasks:
-              - shell: make install@integration
-              - label: Integration
-                junit: report/junit/*.xml
-                parallel: true
-                warn: true
-                tasks:
-                  - label: Lint
-                    tasks:
-                      - shell: make lint.php-cs-fixer@integration
-                      - shell: make lint.twig@integration
-                      - shell: make lint.yaml@integration
-                      - shell: make lint.eslint@integration
-                  - label: Security
-                    tasks:
-                      - shell: make security.symfony@integration
-                      - shell: make security.yarn@integration
-                  - label: Test
-                    tasks:
-                      - shell: make test.phpunit@integration
-                        artifacts: var/log/*.log
-                        # artifacts:
-                        #   - var/log/foo.log
-                        #   - var/log/bar.log
-                        # env:
-                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
-```
-
-In this example we have two parallel stages: `api` and `mobile`, corresponding to two different sub-apps.
-
-```yaml
-###############
-# Integration #
-###############
-
-integration:
-    jenkins:
-        pipeline:
-            tasks:
-              - label: Integration # Optional
-                parallel: true # ! Careful ! Could *NOT* be nested !
-                junit: report/junit/*.xml
-                artifacts: var/log/*.log
-                warn: true # Turn errors into warnings (recursively applied)
-                tasks:
-                  - app: api # Optional
-                    tasks:
-                      - shell: make install@integration
-                      - shell: make build@integration
-                      - shell: make lint.php-cs-fixer@integration
-                      - shell: make security.symfony@integration
-                      - shell: make test.phpunit@integration
-                        artifacts: var/log/*.log
-                        # env:
-                        #     DATABASE_URL: mysql://root@127.0.0.1:3306/app
-                  - app: mobile
-                    tasks:
-                      - shell: make install@integration
-                      - shell: make build@integration
-                      - shell: make lint.eslint@integration
-                      - shell: make test.jest@integration
-```
 
 ### Github Actions
 
