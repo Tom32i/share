@@ -10,15 +10,17 @@ tableOfContent: 3
 
 MacOS
 
-* Docker Desktop 4.3.2+
+* Docker Desktop 4.29.0+
 (`brew install docker`)
-* Mutagen Compose 0.13.0+
+* Mutagen Compose 0.17.5+
 (`brew install mutagen-io/mutagen/mutagen-compose`)
 
 Linux
 
-* Docker 20.10.14+
+* Docker Engine 26.0.0+
 (see [documentation](https://docs.docker.com/engine/install/))
+* Docker Compose 2.26.0+
+(see [documentation](https://docs.docker.com/compose/install/))
 
 ## Overview
 
@@ -125,7 +127,7 @@ project:
 ##########
 
 system:
-    version: 11
+    version: 12
     #timezone: Etc/UTC # Optional
     #locales: # Optional
     #    default: C.UTF-8
@@ -183,7 +185,7 @@ system:
         #               }
         #           }
     php:
-        version: 8.2
+        version: 8.3
         # composer:
         #   version: 1 # Optional
         extensions:
@@ -202,7 +204,7 @@ system:
                 upload_max_filesize: 16M
                 post_max_size: 16M
     nodejs:
-        version: 20
+        version: 22
         # packages:
         #   - package: mjml
         #     version: 4.6.3
@@ -318,50 +320,10 @@ Details:
 
 ## Integration
 
-### Github Actions
+### GitHub Actions
 
-The recipes can generate Github actions files you can use in your workflows.  
-Complete the `integration.github.jobs` according to your need, and consult the `.manala/github/integration/README.md` to
-learn how you can write your own workflows using these actions.
-
-```yaml
-###############
-# Integration #
-###############
-
-integration:
-  github:
-    jobs:
-      # Lint
-      lint:
-        tasks:
-          - shell: make install@integration
-          - shell: make build@integration
-          - shell: make lint.twig@integration
-          - shell: make lint.yaml@integration
-          - shell: make lint.phpstan@integration
-          - shell: make lint.php-cs-fixer@integration
-          - shell: make lint.eslint@integration
-      # Security
-      security:
-        tasks:
-          - shell: make security.symfony@integration
-          - shell: make security.npm@integration
-      # Test
-      test:
-        tasks:
-          - label: Install
-            shell: |-
-              make install.php@integration
-              # Fake manifest.json
-              mkdir -p public/build/
-              echo {} > public/build/manifest.json
-              # Install phpunit
-              vendor/bin/simple-phpunit install
-          - shell: make test.phpunit@integration
-        artifacts:
-          - var/log/test.log
-```
+The recipes can generate GitHub actions files you can use in your workflows.  
+Consult the `.manala/github/integration/README.md` to learn how you can write your own workflows using these actions.
 
 ### Common integration tasks
 
@@ -535,7 +497,7 @@ deliveries:
     #deploy_remove:
     #  - web/app_dev.php
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.2-fpm
+      - shell: sudo /bin/systemctl reload php8.3-fpm
       #- shell: sudo /bin/systemctl restart supervisor
     # GitHub
     github_ssh_key_secret: SSH_DEPLOY_KEY_PRODUCTION
@@ -555,9 +517,9 @@ deliveries:
     github_ssh_key_secret: SSH_DEPLOY_KEY_STAGING
 ```
 
-### Github Actions
+### GitHub Actions
 
-Deliveries can be triggered through Github Actions as well.
+Deliveries can be triggered through GitHub Actions as well.
 Consult the `.manala/github/deliveries/README.md` to learn how to write your own release & deploy workflows.
 
 !!! Note

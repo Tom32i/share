@@ -37,16 +37,15 @@ runs:
 
     - name: Checkout production (ref "${{ inputs.ref || 'master' }}")
       if: inputs.tier == 'production'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref || 'master' }}
         path: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
 
     - name: Setup SSH Key for production
-      id: setup_ssh_key_production
       if: inputs.tier == 'production'
       shell: bash
-      run: echo "ssh_key_secret=SSH_DEPLOY_KEY" >> $GITHUB_OUTPUT
+      run: echo "MANALA_DELIVERIES_SSH_KEY_SECRET=SSH_DEPLOY_KEY" >> $GITHUB_ENV
 
     ###########
     # staging #
@@ -54,16 +53,15 @@ runs:
 
     - name: Checkout staging (ref "${{ inputs.ref || 'master' }}")
       if: inputs.tier == 'staging'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref || 'master' }}
         path: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
 
     - name: Setup SSH Key for staging
-      id: setup_ssh_key_staging
       if: inputs.tier == 'staging'
       shell: bash
-      run: echo "ssh_key_secret=SSH_DEPLOY_KEY" >> $GITHUB_OUTPUT
+      run: echo "MANALA_DELIVERIES_SSH_KEY_SECRET=SSH_DEPLOY_KEY" >> $GITHUB_ENV
 
     #########
     # Setup #
@@ -71,9 +69,10 @@ runs:
 
     - name: >
         Set up delivery
-        ${{ inputs.app && format('{0}@', inputs.app) || '' }}${{ inputs.tier }}
+        ${{ inputs.app && format('{0}', inputs.app) || '' }}@${{ inputs.tier }}
       uses: ./.manala/github/integration/setup
       with:
         dir: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
         env: ${{ inputs.env }}
-        ssh_key: ${{ fromJSON(inputs.secrets)[steps[format('setup_ssh_key_{0}_{1}', inputs.app, inputs.tier)].outputs.ssh_key_secret] }}
+        ssh_key: >-
+          ${{ fromJSON(inputs.secrets)[env.MANALA_DELIVERIES_SSH_KEY_SECRET] }}

@@ -38,14 +38,10 @@ RUN \
         curl \
         make \
         socat \
-    # Apt keyrings (debian < bookworm)
-    && mkdir --verbose --parents /etc/apt/keyrings \
     # User
     && addgroup --gid ${MANALA_GROUP_ID} app \
     && adduser --home /home/app --shell /bin/bash --uid ${MANALA_USER_ID} --gecos app --ingroup app --disabled-password app \
-    && echo "app ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/app \
-    # Clean
-    && rm -rf /var/lib/apt/lists/*
+    && echo "app ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/app
 
 WORKDIR /srv/app
 
@@ -70,6 +66,7 @@ RUN \
     mv /usr/bin/ischroot /usr/bin/ischroot_ \
     && ln -s /bin/true /usr/bin/ischroot \
     && apt-get --quiet update \
+    && apt-get --quiet --yes --purge --autoremove upgrade \
     && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         sysvinit-core \
     && mv /usr/bin/ischroot_ /usr/bin/ischroot \
@@ -98,12 +95,11 @@ RUN \
         umountfs \
         umountroot \
     # Block systemd replacement
-    && printf "Package: systemd-sysv\n\
+    && printf "\
+Package: systemd-sysv\n\
 Pin: release *\n\
 Pin-Priority: -1\n\
-" > /etc/apt/preferences \
-    # Clean
-    && rm -rf /var/lib/apt/lists/*
+" > /etc/apt/preferences
 
 STOPSIGNAL SIGINT
 
@@ -117,10 +113,9 @@ FROM system AS init-openrc
 RUN \
     rm -f /etc/init.d/hwclock.sh \
     && apt-get --quiet update \
+    && apt-get --quiet --yes --purge --autoremove upgrade \
     && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
-        openrc \
-    # Clean
-    && rm -rf /var/lib/apt/lists/*
+        openrc
 
 STOPSIGNAL SIGINT
 
@@ -133,12 +128,13 @@ FROM system AS init-systemd
 
 RUN \
     apt-get --quiet update \
+    && apt-get --quiet --yes --purge --autoremove upgrade \
     && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         systemd dbus \
     && systemctl set-default multi-user.target \
     && sed -i 's/#\(ForwardToConsole=\).*$/\1yes/' \
         /etc/systemd/journald.conf \
-    && printf "Defaults env_keep += \"container\"\n" \
+    && echo "Defaults env_keep += \"container\"" \
         > /etc/sudoers.d/systemd \
     && rm -rf \
         /etc/systemd/system/*.wants/* \
@@ -147,9 +143,7 @@ RUN \
         /lib/systemd/system/sockets.target.wants/*udev* \
         /lib/systemd/system/sockets.target.wants/*initctl* \
         /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev* \
-        /lib/systemd/system/systemd-update-utmp* \
-    # Clean
-    && rm -rf /var/lib/apt/lists/*
+        /lib/systemd/system/systemd-update-utmp*
 
 VOLUME /sys/fs/cgroup
 
@@ -169,7 +163,7 @@ FROM init-${MANALA_INIT} AS provision-none
 # Ansible
 FROM init-${MANALA_INIT} AS provision-ansible
 
-ARG ANSIBLE_VERSION="2.14.3"
+ARG ANSIBLE_VERSION="8.7.0"
 ARG MANALA_PROVISION_LIMIT
 ARG SYMFONY_IDE
 
@@ -177,6 +171,7 @@ ARG SYMFONY_IDE
 ENV LANG="C.UTF-8"
 RUN \
     apt-get --quiet update \
+    && apt-get --quiet --yes --purge --autoremove upgrade \
     && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
         # As managed node
         python3 \
@@ -184,20 +179,21 @@ RUN \
         # As controller node
         python3-pip \
     && pip3 --no-cache-dir --disable-pip-version-check install \
-        ansible-core==${ANSIBLE_VERSION} \
-    && mkdir --verbose --parents /etc/ansible \
-    && printf "[defaults]\n\
+        ansible==${ANSIBLE_VERSION} \
+    && install --verbose --mode 0755 --directory /etc/ansible \
+    && printf "\
+[defaults]\n\
 force_color = True\n\
 display_skipped_hosts = False\n\
 retry_files_enabled = False\n\
 stdout_callback = community.general.yaml\n\
+inject_facts_as_vars = False\n\
+check_mode_markers = True\n\
 [ssh_connection]\n\
 pipelining = True\n\
 [privilege_escalation]\n\
 become_flags = -E\n\
-" > /etc/ansible/ansible.cfg \
-    # Clean
-    && rm -rf /var/lib/apt/lists/*
+" > /etc/ansible/ansible.cfg
 
 COPY Makefile      ./.manala/
 COPY ansible/      ./.manala/ansible/

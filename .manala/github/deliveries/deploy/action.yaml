@@ -16,7 +16,7 @@ inputs:
 outputs:
   deployment_url:
     description: The deployed app URL
-    value: ${{ steps[format('deployment_url_{0}', inputs.tier)].outputs.deployment_url }}
+    value: ${{ steps.deployment_url.outputs.deployment_url }}
 
 runs:
   using: composite
@@ -27,31 +27,34 @@ runs:
     ##############
 
     - name: Set deployment url for production
-      id: deployment_url_production
       if: inputs.tier == 'production'
       shell: bash
-      run: echo "deployment_url=https://share.tom32i.fr" >> $GITHUB_OUTPUT
+      run: echo "MANALA_DELIVERIES_DEPLOYMENT_URL=https://share.tom32i.fr" >> $GITHUB_ENV
 
     ###########
     # staging #
     ###########
 
     - name: Set deployment url for staging
-      id: deployment_url_staging
       if: inputs.tier == 'staging'
       shell: bash
-      run: echo "deployment_url=https://share.deployer.vm" >> $GITHUB_OUTPUT
+      run: echo "MANALA_DELIVERIES_DEPLOYMENT_URL=https://share.deployer.vm" >> $GITHUB_ENV
 
     ##########
     # Deploy #
     ##########
 
+    - name: Save deployment url
+      id: deployment_url
+      shell: bash
+      run: echo "deployment_url=${{ env.MANALA_DELIVERIES_DEPLOYMENT_URL }}" >> $GITHUB_OUTPUT
+
     - name: >
         Deploy
-        ${{ inputs.app && format('{0}@', inputs.app) || '' }}${{ inputs.tier }}
+        ${{ inputs.app && format('{0}', inputs.app) || '' }}@${{ inputs.tier }}
       uses: ./.manala/github/integration/run
       with:
         dir: deliveries/${{ inputs.app && format('{0}/', inputs.app) || '' }}${{ inputs.tier }}
         run: |
-          make deploy${{ inputs.app && format('.{0}@', inputs.app) || '' }}${{ inputs.tier }} \
+          make deploy${{ inputs.app && format('.{0}', inputs.app) || '' }}@${{ inputs.tier }} \
             ${{ inputs.ref != '' && format('REF={0}', inputs.ref) || '' }}

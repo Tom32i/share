@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Reset hard staging branch on ${{ github.event.inputs.ref }}'
         uses: nicksnell/action-reset-repo@master
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Trigger release workflow for staging'
         run: |
