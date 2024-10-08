@@ -7,7 +7,7 @@ ARG MANALA_PROVISION="none"
 # System #
 ##########
 
-FROM debian:11-slim AS system
+FROM debian:12-slim AS system
 
 LABEL org.opencontainers.image.authors="Elao <contact@elao.com>"
 
@@ -32,12 +32,12 @@ RUN \
     apt-get --quiet update \
     && apt-get --quiet --yes --purge --autoremove upgrade \
     && apt-get --quiet --yes --no-install-recommends --verbose-versions install \
-        gnupg \
         ca-certificates \
-        sudo \
         curl \
+        gnupg \
         make \
         socat \
+        sudo \
     # User
     && addgroup --gid ${MANALA_GROUP_ID} app \
     && adduser --home /home/app --shell /bin/bash --uid ${MANALA_USER_ID} --gecos app --ingroup app --disabled-password app \
@@ -177,9 +177,11 @@ RUN \
         python3 \
         python3-apt \
         # As controller node
-        python3-pip \
-    && pip3 --no-cache-dir --disable-pip-version-check install \
-        ansible==${ANSIBLE_VERSION} \
+        pipx \
+    && PIPX_HOME="/usr/local/pipx" PIPX_BIN_DIR="/usr/local/bin" \
+        pipx install ansible==${ANSIBLE_VERSION} \
+            --include-deps --pip-args="--no-cache-dir" --verbose \
+    && rm -rf ~/.cache/pip /usr/local/pipx/.cache /usr/local/pipx/logs \
     && install --verbose --mode 0755 --directory /etc/ansible \
     && printf "\
 [defaults]\n\

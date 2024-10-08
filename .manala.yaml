@@ -19,9 +19,9 @@ project:
 ##########
 
 system:
-    version: 11
+    version: 12
     php:
-        version: 8.2
+        version: 8.3
         extensions:
           # Symfony
           - intl
@@ -36,7 +36,7 @@ system:
               config:
                   date.timezone: UTC
     nodejs:
-        version: 20
+        version: 22
     files:
         - path: /srv/app/var/log
           src: /srv/log
@@ -133,7 +133,7 @@ deliveries:
     deploy_tasks:
       - shell: make warmup@production
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.2-fpm
+      - shell: sudo /bin/systemctl reload php8.3-fpm
     deploy_url: https://share.tom32i.fr
     # Github
     github_ssh_key_secret: SSH_DEPLOY_KEY
