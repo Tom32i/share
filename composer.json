@@ -32,7 +32,7 @@
         "symfony/web-link": "^6.2",
         "symfony/webpack-encore-bundle": "^1.15",
         "symfony/yaml": "^6.2",
-        "tom32i/showcase-bundle": "^1.2",
+        "tom32i/showcase-bundle": "dev-video-format-support",
         "twig/extra-bundle": "^3.4",
         "twig/twig": "^3.4"
     },
