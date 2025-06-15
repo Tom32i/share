@@ -133,7 +133,7 @@ deliveries:
     deploy_tasks:
       - shell: make warmup@production
     deploy_post_tasks:
-      - shell: sudo /bin/systemctl reload php8.3-fpm
+      - shell: sudo /bin/systemctl reload php8.4-fpm
     deploy_url: https://share.tom32i.fr
     # Github
     github_ssh_key_secret: SSH_DEPLOY_KEY

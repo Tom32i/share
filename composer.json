@@ -28,13 +28,13 @@
         "symfony/twig-bundle": "^7.0",
         "symfony/validator": "^7.0",
         "symfony/web-link": "^7.0",
+        "symfony/webpack-encore-bundle": "^2.1",
         "symfony/yaml": "^7.0",
         "tom32i/showcase-bundle": "^1.4.1",
         "twig/extra-bundle": "^3.4",
         "twig/twig": "^3.4"
     },
     "require-dev": {
-        "symfony/webpack-encore-bundle": "^2.1",
         "ekino/phpstan-banned-code": "^2.0",
         "friendsofphp/php-cs-fixer": "^3.10",
         "phpstan/extension-installer": "^1.1",
