@@ -44,7 +44,7 @@ MANALA_DOCKER_COMMAND_DEFAULT_DIR = /srv/app/$(MANALA_CURRENT_DIR)
 # Services
 
 ifeq ($(MANALA_DOCKER_COMPOSE_PROFILE),development)
-MANALA_DOCKER_DEFAULT_SERVICES += mailhog
+MANALA_DOCKER_DEFAULT_SERVICES += mailpit
 endif
 
 ###############
@@ -248,4 +248,4 @@ trigger-release+deploy@staging:
 MANALA_HELP_PROJECT = $(MANALA_COLOR_COMMENT)┏(°.°)┛┗(°.°)┓$(MANALA_COLOR_RESET) ♪♫ Let's party ♫♪ $(MANALA_COLOR_COMMENT)┗(°.°)┛┏(°.°)┓$(MANALA_COLOR_RESET)\n
 MANALA_HELP_PROJECT += $(call manala_help,Http,         http://$(call manala_project_host, 80))
 MANALA_HELP_PROJECT += $(call manala_help,Https,        https://$(call manala_project_host, 43))
-MANALA_HELP_PROJECT += $(call manala_help,MailHog,      http://$(call manala_project_host, 25))
+MANALA_HELP_PROJECT += $(call manala_help,Mailpit,      http://$(call manala_project_host, 25))
