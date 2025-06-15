@@ -18,7 +18,6 @@
         "symfony/intl": "^7.0",
         "symfony/mime": "^7.0",
         "symfony/monolog-bundle": "^3.8",
-        "symfony/notifier": "^7.0",
         "symfony/process": "^7.0",
         "symfony/property-access": "^7.0",
         "symfony/property-info": "^7.0",
